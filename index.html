@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meal Plan — weekly planner, suggestions & shopping lists</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="wrap">
+      <h1>🍽️ Meal&nbsp;Plan</h1>
+      <p class="tagline">Plan your week, get suggestions, build a shopping list, and cook with step-by-step instructions.</p>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <div class="wrap">
+      <button class="tab-btn active" data-tab="plan">📅 Plan</button>
+      <button class="tab-btn" data-tab="shopping">🛒 Shopping List</button>
+    </div>
+  </nav>
+
+  <main class="wrap">
+    <!-- ============ PLAN TAB ============ -->
+    <section id="plan" class="tab-panel active">
+      <!-- Suggestions / auto-generate controls -->
+      <div class="card controls">
+        <h2>Suggest a weekly plan</h2>
+        <p class="muted">Pick your preferences and let Meal&nbsp;Plan fill the week. You can tweak any meal afterwards.</p>
+
+        <div class="control-group">
+          <span class="control-label">Dietary preferences</span>
+          <div id="diet-filters" class="chk-row"></div>
+        </div>
+
+        <div class="control-row">
+          <div class="control-group">
+            <span class="control-label">Meals to plan</span>
+            <div id="slot-filters" class="chk-row"></div>
+          </div>
+          <div class="control-group">
+            <label class="control-label" for="max-calories">Max calories per meal</label>
+            <input type="number" id="max-calories" min="0" step="50" placeholder="No limit" />
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button id="btn-generate" class="btn primary">✨ Generate week</button>
+          <button id="btn-clear" class="btn ghost">Clear plan</button>
+        </div>
+        <p id="generate-note" class="note"></p>
+      </div>
+
+      <!-- Weekly planner grid -->
+      <div class="card">
+        <div class="planner-head">
+          <h2>Your week</h2>
+          <div class="planner-stats">
+            <span id="week-filled">0 meals planned</span>
+            <span class="dot">·</span>
+            <span><strong id="week-calories">0</strong> kcal total</span>
+          </div>
+        </div>
+        <div id="planner-grid" class="planner-grid"></div>
+      </div>
+    </section>
+
+    <!-- ============ SHOPPING TAB ============ -->
+    <section id="shopping" class="tab-panel">
+      <div class="card">
+        <div class="planner-head">
+          <h2>Shopping list</h2>
+          <div class="planner-stats">
+            <span id="shopping-summary"></span>
+          </div>
+        </div>
+        <p class="muted">Ingredients from every planned meal, combined and grouped by aisle.</p>
+        <div class="btn-row">
+          <button id="btn-copy-shopping" class="btn ghost">📋 Copy list</button>
+          <span id="shopping-copy-note" class="note ok"></span>
+        </div>
+        <div id="shopping-list"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ RECIPE / COOKING MODAL ============ -->
+  <div id="recipe-modal" class="modal">
+    <div class="modal-box">
+      <button class="modal-close" data-close="recipe" aria-label="Close">×</button>
+      <h2 id="recipe-title"></h2>
+      <p id="recipe-meta" class="muted"></p>
+      <div id="recipe-tags" class="tag-row"></div>
+
+      <h3>Ingredients</h3>
+      <ul id="recipe-ingredients" class="ingredient-list"></ul>
+
+      <h3>Cooking instructions</h3>
+      <ol id="recipe-steps" class="step-list"></ol>
+    </div>
+  </div>
+
+  <!-- ============ RECIPE PICKER MODAL ============ -->
+  <div id="picker-modal" class="modal">
+    <div class="modal-box">
+      <button class="modal-close" data-close="picker" aria-label="Close">×</button>
+      <h2 id="picker-title">Choose a meal</h2>
+      <p class="muted">Suggestions matching your dietary preferences. Click one to add it.</p>
+      <div id="picker-list" class="picker-list"></div>
+    </div>
+  </div>
+
+  <footer class="app-footer">
+    <div class="wrap">
+      <p>Meal&nbsp;Plan · your plan is saved locally in this browser.</p>
+    </div>
+  </footer>
+
+  <script src="js/recipes.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/suggestions.js"></script>
+  <script src="js/shopping.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
