@@ -64,6 +64,20 @@
         </div>
         <div id="planner-grid" class="planner-grid"></div>
       </div>
+
+      <!-- My meals: create your own or import from a link -->
+      <div class="card">
+        <div class="planner-head">
+          <h2>My meals</h2>
+          <div class="planner-stats"><span id="custom-count"></span></div>
+        </div>
+        <p class="muted">Add your own recipes to the database, or import one from a Pinterest pin or recipe link. They show up in the planner, suggestions and shopping list like any other meal.</p>
+        <div class="btn-row">
+          <button id="btn-add-custom" class="btn primary">＋ Add custom meal</button>
+          <button id="btn-import-link" class="btn ghost">🔗 Import from link</button>
+        </div>
+        <div id="custom-list" class="custom-list"></div>
+      </div>
     </section>
 
     <!-- ============ SHOPPING TAB ============ -->
@@ -98,6 +112,80 @@
 
       <h3>Cooking instructions</h3>
       <ol id="recipe-steps" class="step-list"></ol>
+
+      <div id="recipe-actions" class="recipe-actions"></div>
+    </div>
+  </div>
+
+  <!-- ============ CUSTOM MEAL FORM MODAL ============ -->
+  <div id="custom-modal" class="modal">
+    <div class="modal-box">
+      <button class="modal-close" data-close="custom" aria-label="Close">×</button>
+      <h2 id="custom-title">Add a custom meal</h2>
+
+      <div id="import-row" class="import-row">
+        <label class="control-label" for="import-url">Import from a link (Pinterest, recipe blog, …)</label>
+        <div class="import-input">
+          <input type="url" id="import-url" placeholder="https://pinterest.com/pin/…" />
+          <button id="btn-do-import" class="btn ghost" type="button">Import</button>
+        </div>
+        <p id="import-note" class="note"></p>
+      </div>
+
+      <form id="custom-form" autocomplete="off">
+        <div class="control-group">
+          <label class="control-label" for="cf-name">Meal name</label>
+          <input type="text" id="cf-name" class="text-input" placeholder="e.g. Grandma's Lasagna" required />
+        </div>
+
+        <div class="control-group">
+          <span class="control-label">Meal type</span>
+          <div id="cf-mealtypes" class="chk-row"></div>
+        </div>
+
+        <div class="control-group">
+          <span class="control-label">Dietary tags (optional)</span>
+          <div id="cf-tags" class="chk-row"></div>
+        </div>
+
+        <div class="control-row">
+          <div class="control-group">
+            <label class="control-label" for="cf-servings">Servings</label>
+            <input type="number" id="cf-servings" class="num-input" min="1" value="2" />
+          </div>
+          <div class="control-group">
+            <label class="control-label" for="cf-calories">Calories / serving</label>
+            <input type="number" id="cf-calories" class="num-input" min="0" step="10" placeholder="optional" />
+          </div>
+          <div class="control-group">
+            <label class="control-label" for="cf-prep">Prep (min)</label>
+            <input type="number" id="cf-prep" class="num-input" min="0" value="0" />
+          </div>
+          <div class="control-group">
+            <label class="control-label" for="cf-cook">Cook (min)</label>
+            <input type="number" id="cf-cook" class="num-input" min="0" value="0" />
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label class="control-label" for="cf-ingredients">Ingredients — one per line (e.g. "2 cups flour")</label>
+          <textarea id="cf-ingredients" class="area-input" rows="6" placeholder="2 cups flour&#10;3 eggs&#10;1 tsp salt"></textarea>
+        </div>
+
+        <div class="control-group">
+          <label class="control-label" for="cf-steps">Cooking steps — one per line</label>
+          <textarea id="cf-steps" class="area-input" rows="6" placeholder="Preheat the oven to 180C/350F.&#10;Mix the dry ingredients.&#10;…"></textarea>
+        </div>
+
+        <input type="hidden" id="cf-source" />
+        <input type="hidden" id="cf-id" />
+
+        <p id="custom-error" class="note warn"></p>
+        <div class="btn-row">
+          <button type="submit" class="btn primary">Save meal</button>
+          <button type="button" class="btn ghost" data-close="custom">Cancel</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -121,6 +209,7 @@
   <script src="js/storage.js"></script>
   <script src="js/suggestions.js"></script>
   <script src="js/shopping.js"></script>
+  <script src="js/custom.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

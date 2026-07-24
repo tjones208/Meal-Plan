@@ -9,7 +9,7 @@
 // Return recipes valid for a given slot, honouring the active diet filters and
 // calorie ceiling.
 function candidatesForSlot(slot, prefs) {
-  return RECIPES.filter((recipe) => {
+  return getAllRecipes().filter((recipe) => {
     if (!recipe.mealTypes.includes(slot)) return false;
     if (prefs.maxCalories && recipe.calories > prefs.maxCalories) return false;
     for (const diet of prefs.diets) {
@@ -77,5 +77,9 @@ function generateWeekPlan(prefs) {
 // "surprise me" picker when a user clicks an empty cell.
 function suggestForSlot(slot, prefs, limit = 6) {
   const candidates = candidatesForSlot(slot, prefs || { diets: [], maxCalories: 0 });
-  return rotate(candidates, slot.length).slice(0, limit);
+  // Surface the user's own custom meals first so they are easy to find, then
+  // a rotating selection of built-in recipes.
+  const custom = candidates.filter((r) => r.custom);
+  const builtIn = rotate(candidates.filter((r) => !r.custom), slot.length);
+  return custom.concat(builtIn).slice(0, limit);
 }

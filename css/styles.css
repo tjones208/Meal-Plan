@@ -317,6 +317,71 @@ main { padding: 24px 0 60px; }
 .picker-card-name { font-weight: 700; }
 .picker-card-meta { font-size: 0.82rem; color: var(--muted); margin: 4px 0 8px; }
 
+/* Custom meals */
+.custom-list { margin-top: 8px; }
+.custom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 4px;
+  border-bottom: 1px solid var(--line);
+}
+.custom-row-main { display: flex; flex-direction: column; gap: 2px; }
+.custom-row-meta { font-size: 0.8rem; color: var(--muted); text-transform: capitalize; }
+.tag-custom { background: #fdeede; color: var(--brand-dark); }
+
+/* Custom meal form */
+.text-input, .num-input, .area-input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  background: #fff;
+  color: var(--ink);
+}
+.num-input { width: 110px; }
+.area-input { resize: vertical; line-height: 1.5; }
+#custom-form .control-row { gap: 16px; }
+
+.import-row {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px;
+  margin: 8px 0 18px;
+}
+.import-input { display: flex; gap: 8px; margin-top: 4px; }
+.import-input input {
+  flex: 1;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+
+.recipe-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.source-link {
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+.source-link:hover { text-decoration: underline; }
+.btn.small { padding: 7px 12px; font-size: 0.85rem; }
+.danger-btn { color: var(--danger); }
+.danger-btn:hover { border-color: var(--danger); }
+
 /* Footer */
 .app-footer {
   border-top: 1px solid var(--line);

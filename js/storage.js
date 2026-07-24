@@ -8,6 +8,10 @@
 
 const STORAGE_KEY = 'mealplan.state.v1';
 
+// Custom (user-created) recipes are persisted separately so they survive
+// clearing a meal plan and can grow independently of the weekly state.
+const CUSTOM_KEY = 'mealplan.custom.v1';
+
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 // Slots we schedule per day. Keep in sync with the planner grid in app.js.
@@ -66,5 +70,30 @@ function saveState(state) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch (err) {
     console.warn('Could not save plan.', err);
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Custom recipe persistence
+ * ------------------------------------------------------------------ */
+
+// Load the user's custom recipes, tolerating missing/corrupt data.
+function loadCustomRecipes() {
+  try {
+    const raw = localStorage.getItem(CUSTOM_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((r) => r && r.id && r.name) : [];
+  } catch (err) {
+    console.warn('Could not load custom recipes.', err);
+    return [];
+  }
+}
+
+function saveCustomRecipes(list) {
+  try {
+    localStorage.setItem(CUSTOM_KEY, JSON.stringify(list || []));
+  } catch (err) {
+    console.warn('Could not save custom recipes.', err);
   }
 }

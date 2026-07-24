@@ -319,6 +319,7 @@ function openRecipeModal(recipeId) {
 
   const tags = $('#recipe-tags');
   tags.innerHTML = '';
+  if (recipe.custom) tags.appendChild(el('span', { class: 'tag tag-custom', text: '★ custom' }));
   for (const t of recipe.tags) tags.appendChild(el('span', { class: 'tag', text: t }));
 
   const ingList = $('#recipe-ingredients');
@@ -337,6 +338,34 @@ function openRecipeModal(recipeId) {
   recipe.steps.forEach((step) => {
     steps.appendChild(el('li', { text: step }));
   });
+
+  // Actions: link back to the source, and (for custom meals) edit/delete.
+  const actions = $('#recipe-actions');
+  actions.innerHTML = '';
+  if (recipe.sourceUrl) {
+    actions.appendChild(
+      el('a', { class: 'source-link', href: recipe.sourceUrl, target: '_blank', rel: 'noopener noreferrer', text: '🔗 View original recipe' })
+    );
+  }
+  if (recipe.custom) {
+    actions.appendChild(
+      el('button', {
+        class: 'btn ghost small',
+        text: 'Edit',
+        onclick: () => { closeRecipeModal(); openCustomModal(recipe); },
+      })
+    );
+    actions.appendChild(
+      el('button', {
+        class: 'btn ghost small danger-btn',
+        text: 'Delete meal',
+        onclick: () => {
+          deleteCustomRecipeById(recipe.id);
+          closeRecipeModal();
+        },
+      })
+    );
+  }
 
   $('#recipe-modal').classList.add('open');
 }
@@ -381,6 +410,7 @@ function initControls() {
       const target = btn.dataset.close;
       if (target === 'recipe') closeRecipeModal();
       if (target === 'picker') closePicker();
+      if (target === 'custom') closeCustomModal();
     });
   });
 
@@ -394,14 +424,189 @@ function initControls() {
     if (e.key === 'Escape') {
       closeRecipeModal();
       closePicker();
+      closeCustomModal();
     }
   });
 }
 
+/* ------------------------------------------------------------------ *
+ * Feature 5: Custom meals (create your own + import from a link)
+ * ------------------------------------------------------------------ */
+
+// Build the meal-type and dietary-tag checkboxes in the custom form, and wire
+// the buttons. Called once at startup.
+function initCustomControls() {
+  const mt = $('#cf-mealtypes');
+  for (const m of MEAL_TYPES) {
+    const label = el('label', { class: 'chk' });
+    const box = el('input', { type: 'checkbox', class: 'cf-mealtype', value: m });
+    label.appendChild(box);
+    label.appendChild(el('span', { text: titleCase(m) }));
+    mt.appendChild(label);
+  }
+
+  const tg = $('#cf-tags');
+  for (const t of DIET_FILTERS) {
+    const label = el('label', { class: 'chk' });
+    const box = el('input', { type: 'checkbox', class: 'cf-tag', value: t });
+    label.appendChild(box);
+    label.appendChild(el('span', { text: t }));
+    tg.appendChild(label);
+  }
+
+  $('#btn-add-custom').addEventListener('click', () => openCustomModal(null));
+  $('#btn-import-link').addEventListener('click', () => openCustomModal(null, { focusImport: true }));
+  $('#btn-do-import').addEventListener('click', runImport);
+  $('#custom-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    saveCustomFromForm();
+  });
+}
+
+// Open the form. If `recipe` is provided we are editing it; otherwise a blank
+// form for a new meal. opts.focusImport highlights the import field.
+function openCustomModal(recipe, opts = {}) {
+  $('#custom-title').textContent = recipe ? 'Edit meal' : 'Add a custom meal';
+  $('#custom-error').textContent = '';
+  $('#import-note').textContent = '';
+  $('#import-url').value = '';
+
+  $('#cf-name').value = recipe ? recipe.name : '';
+  $('#cf-servings').value = recipe ? recipe.servings : 2;
+  $('#cf-calories').value = recipe && recipe.calories ? recipe.calories : '';
+  $('#cf-prep').value = recipe ? recipe.prepTime : 0;
+  $('#cf-cook').value = recipe ? recipe.cookTime : 0;
+  $('#cf-source').value = recipe && recipe.sourceUrl ? recipe.sourceUrl : '';
+  $('#cf-id').value = recipe ? recipe.id : '';
+  $('#cf-ingredients').value = recipe
+    ? recipe.ingredients.map((i) => `${i.qty} ${i.unit} ${i.item}`.replace(' unit ', ' ')).join('\n')
+    : '';
+  $('#cf-steps').value = recipe ? recipe.steps.join('\n') : '';
+
+  const mealTypes = recipe ? recipe.mealTypes : [];
+  document.querySelectorAll('.cf-mealtype').forEach((c) => { c.checked = mealTypes.includes(c.value); });
+  const tags = recipe ? recipe.tags : [];
+  document.querySelectorAll('.cf-tag').forEach((c) => { c.checked = tags.includes(c.value); });
+
+  $('#custom-modal').classList.add('open');
+  if (opts.focusImport) $('#import-url').focus();
+  else $('#cf-name').focus();
+}
+
+function closeCustomModal() {
+  $('#custom-modal').classList.remove('open');
+}
+
+// Read the form controls into a plain fields object.
+function readCustomForm() {
+  return {
+    id: $('#cf-id').value || '',
+    name: $('#cf-name').value,
+    mealTypes: Array.from(document.querySelectorAll('.cf-mealtype:checked')).map((c) => c.value),
+    tags: Array.from(document.querySelectorAll('.cf-tag:checked')).map((c) => c.value),
+    servings: $('#cf-servings').value,
+    calories: $('#cf-calories').value,
+    prepTime: $('#cf-prep').value,
+    cookTime: $('#cf-cook').value,
+    ingredientsText: $('#cf-ingredients').value,
+    stepsText: $('#cf-steps').value,
+    sourceUrl: $('#cf-source').value,
+  };
+}
+
+function saveCustomFromForm() {
+  const { recipe, error } = buildRecipeFromForm(readCustomForm());
+  if (error) {
+    $('#custom-error').textContent = error;
+    return;
+  }
+  const list = loadCustomRecipes();
+  const idx = list.findIndex((r) => r.id === recipe.id);
+  if (idx >= 0) list[idx] = recipe;
+  else list.push(recipe);
+  saveCustomRecipes(list);
+  setCustomRecipes(list);
+  renderCustomList();
+  renderPlanner();
+  closeCustomModal();
+}
+
+function deleteCustomRecipeById(id) {
+  const list = loadCustomRecipes().filter((r) => r.id !== id);
+  saveCustomRecipes(list);
+  setCustomRecipes(list);
+  // Remove the deleted meal from any planner slots that referenced it.
+  for (const day of DAYS) {
+    for (const slot of SLOTS) {
+      if (state.plan[day][slot] === id) state.plan[day][slot] = null;
+    }
+  }
+  saveState(state);
+  renderCustomList();
+  renderPlanner();
+}
+
+async function runImport() {
+  const url = $('#import-url').value;
+  const note = $('#import-note');
+  note.className = 'note';
+  note.textContent = 'Reading link…';
+  const data = await importRecipeFromUrl(url);
+  if (data.name) $('#cf-name').value = data.name;
+  if (data.ingredientsText) $('#cf-ingredients').value = data.ingredientsText;
+  if (data.stepsText) $('#cf-steps').value = data.stepsText;
+  if (data.servings) $('#cf-servings').value = data.servings;
+  if (data.calories) $('#cf-calories').value = data.calories;
+  $('#cf-source').value = data.sourceUrl || url;
+  note.className = data.imported ? 'note ok' : 'note warn';
+  note.textContent = data.message;
+}
+
+// The "My meals" list of custom recipes with quick delete.
+function renderCustomList() {
+  const container = $('#custom-list');
+  container.innerHTML = '';
+  const list = loadCustomRecipes();
+  $('#custom-count').textContent = list.length
+    ? `${list.length} custom meal${list.length === 1 ? '' : 's'}`
+    : '';
+
+  if (list.length === 0) {
+    container.appendChild(el('p', { class: 'muted', text: 'No custom meals yet. Add one above and it joins your recipe database.' }));
+    return;
+  }
+
+  for (const recipe of list) {
+    const row = el('div', { class: 'custom-row' }, [
+      el('div', { class: 'custom-row-main' }, [
+        el('button', {
+          class: 'link-btn',
+          text: recipe.name,
+          title: 'View recipe',
+          onclick: () => openRecipeModal(recipe.id),
+        }),
+        el('div', {
+          class: 'custom-row-meta',
+          text: `${recipe.mealTypes.map(titleCase).join(', ')} · ${recipe.calories || '—'} kcal${recipe.sourceUrl ? ' · linked' : ''}`,
+        }),
+      ]),
+      el('button', {
+        class: 'link-btn danger',
+        text: 'Delete',
+        onclick: () => deleteCustomRecipeById(recipe.id),
+      }),
+    ]);
+    container.appendChild(row);
+  }
+}
+
 function init() {
+  setCustomRecipes(loadCustomRecipes());
   initTabs();
   initControls();
+  initCustomControls();
   renderPlanner();
+  renderCustomList();
 }
 
 document.addEventListener('DOMContentLoaded', init);

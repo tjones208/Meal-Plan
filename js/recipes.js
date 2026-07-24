@@ -9210,6 +9210,21 @@ const DIET_FILTERS = [
 
 const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'];
 
+// User-created recipes, loaded from localStorage at startup (see js/storage.js
+// and js/custom.js). They are merged with the built-in RECIPES everywhere the
+// app looks up recipes, so custom meals show up in the planner, suggestions,
+// shopping list and cooking instructions just like built-in ones.
+let CUSTOM_RECIPES = [];
+
+function setCustomRecipes(list) {
+  CUSTOM_RECIPES = Array.isArray(list) ? list : [];
+}
+
+// The full recipe set the app works with: built-ins first, then custom meals.
+function getAllRecipes() {
+  return RECIPES.concat(CUSTOM_RECIPES);
+}
+
 function getRecipeById(id) {
-  return RECIPES.find((r) => r.id === id) || null;
+  return getAllRecipes().find((r) => r.id === id) || null;
 }
