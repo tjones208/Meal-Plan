@@ -2,3 +2,7 @@ node_modules/
 package-lock.json
 .DS_Store
 *.log
+
+# Generated single-file bundles for deployment (built from index.html + css/ + js/)
+standalone.html
+standalone.min.html
