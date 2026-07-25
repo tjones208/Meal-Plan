@@ -63,6 +63,7 @@ function initTabs() {
       const panel = document.getElementById(btn.dataset.tab);
       panel.classList.add('active');
       if (btn.dataset.tab === 'shopping') renderShopping();
+      if (btn.dataset.tab === 'nutrition') renderNutrition();
     });
   });
 }
@@ -322,6 +323,11 @@ function openRecipeModal(recipeId) {
   if (recipe.custom) tags.appendChild(el('span', { class: 'tag tag-custom', text: '★ custom' }));
   for (const t of recipe.tags) tags.appendChild(el('span', { class: 'tag', text: t }));
 
+  // Per-serving nutrition line.
+  const nut = recipeNutrition(recipe);
+  $('#recipe-nutrition').textContent =
+    `Per serving — Protein ${nut.protein}g · Carbs ${nut.carbs}g · Fat ${nut.fat}g · Sugar ${nut.sugar}g · Fiber ${nut.fiber}g · Sodium ${nut.sodium}mg`;
+
   const ingList = $('#recipe-ingredients');
   ingList.innerHTML = '';
   for (const ing of recipe.ingredients) {
@@ -483,6 +489,14 @@ function openCustomModal(recipe, opts = {}) {
     : '';
   $('#cf-steps').value = recipe ? recipe.steps.join('\n') : '';
 
+  const n = (recipe && recipe.nutrition) || {};
+  $('#cf-protein').value = n.protein || '';
+  $('#cf-carbs').value = n.carbs || '';
+  $('#cf-fat').value = n.fat || '';
+  $('#cf-sugar').value = n.sugar || '';
+  $('#cf-fiber').value = n.fiber || '';
+  $('#cf-sodium').value = n.sodium || '';
+
   const mealTypes = recipe ? recipe.mealTypes : [];
   document.querySelectorAll('.cf-mealtype').forEach((c) => { c.checked = mealTypes.includes(c.value); });
   const tags = recipe ? recipe.tags : [];
@@ -511,6 +525,12 @@ function readCustomForm() {
     ingredientsText: $('#cf-ingredients').value,
     stepsText: $('#cf-steps').value,
     sourceUrl: $('#cf-source').value,
+    protein: $('#cf-protein').value,
+    carbs: $('#cf-carbs').value,
+    fat: $('#cf-fat').value,
+    sugar: $('#cf-sugar').value,
+    fiber: $('#cf-fiber').value,
+    sodium: $('#cf-sodium').value,
   };
 }
 
@@ -598,6 +618,142 @@ function renderCustomList() {
     ]);
     container.appendChild(row);
   }
+}
+
+/* ------------------------------------------------------------------ *
+ * Feature 6: Daily nutrition tracking
+ * ------------------------------------------------------------------ */
+
+// Which day the nutrition detail is showing. Chosen on first render.
+let nutritionDay = null;
+
+function renderNutrition() {
+  const week = weekNutrition(state.plan);
+
+  // Default the selected day to the first day that has meals.
+  if (!nutritionDay || !SLOTS.some((s) => state.plan[nutritionDay][s])) {
+    nutritionDay = DAYS.find((d) => SLOTS.some((s) => state.plan[d][s])) || 'Mon';
+  }
+
+  $('#nutrition-avg').textContent = week.daysWithMeals
+    ? `Daily average: ${week.average.calories.toLocaleString()} kcal over ${week.daysWithMeals} day${week.daysWithMeals === 1 ? '' : 's'}`
+    : '';
+
+  // Day selector tabs.
+  const days = $('#nutrition-days');
+  days.innerHTML = '';
+  for (const day of DAYS) {
+    const has = SLOTS.some((s) => state.plan[day][s]);
+    const btn = el('button', {
+      class: 'day-tab' + (day === nutritionDay ? ' active' : '') + (has ? '' : ' empty'),
+      text: day,
+      onclick: () => { nutritionDay = day; renderNutrition(); },
+    });
+    days.appendChild(btn);
+  }
+
+  renderNutritionDetail(nutritionDay);
+  renderNutritionWeek(week);
+}
+
+function meter(value, target, isLimit) {
+  const pct = target > 0 ? (value / target) * 100 : 0;
+  const over = isLimit && value > target;
+  const fill = el('div', {
+    class: 'meter-fill' + (over ? ' over' : ''),
+    style: `width:${Math.max(0, Math.min(pct, 100))}%`,
+  });
+  return el('div', { class: 'meter' }, [fill]);
+}
+
+function renderNutritionDetail(day) {
+  const box = $('#nutrition-detail');
+  box.innerHTML = '';
+  const bd = dayBreakdown(state.plan, day);
+
+  if (!bd.hasMeals) {
+    box.appendChild(el('p', { class: 'muted', text: `No meals planned for ${day}. Add some in the Plan tab to see its nutrition.` }));
+    return;
+  }
+
+  // Macro calorie split bar.
+  const split = macroSplit(bd.totals);
+  const splitBar = el('div', { class: 'split-bar' }, [
+    el('div', { class: 'split protein', style: `width:${split.protein}%`, title: `Protein ${split.protein}%` }),
+    el('div', { class: 'split carbs', style: `width:${split.carbs}%`, title: `Carbs ${split.carbs}%` }),
+    el('div', { class: 'split fat', style: `width:${split.fat}%`, title: `Fat ${split.fat}%` }),
+  ]);
+  box.appendChild(el('div', { class: 'split-wrap' }, [
+    el('div', { class: 'split-legend', text: `Calorie split — Protein ${split.protein}% · Carbs ${split.carbs}% · Fat ${split.fat}%` }),
+    splitBar,
+  ]));
+
+  // Nutrient rows with progress toward the daily reference.
+  const rows = el('div', { class: 'nutri-rows' });
+  for (const n of NUTRIENTS) {
+    const value = bd.totals[n.key];
+    const target = DAILY_TARGETS[n.key];
+    const pct = Math.round((value / target) * 100);
+    const over = n.limit && value > target;
+    rows.appendChild(
+      el('div', { class: 'nutri-row', title: `${pct}% of the ${target}${n.unit} reference` }, [
+        el('div', { class: 'nutri-top' }, [
+          el('span', { class: 'nutri-label', text: n.label }),
+          el('span', { class: 'nutri-val' + (over ? ' over' : ''), text: `${Math.round(value).toLocaleString()} / ${target.toLocaleString()} ${n.unit}` }),
+        ]),
+        meter(value, target, n.limit),
+      ])
+    );
+  }
+  box.appendChild(rows);
+
+  // Meals that make up the day.
+  const meals = el('div', { class: 'day-meals' });
+  meals.appendChild(el('h3', { class: 'day-meals-title', text: `${day} meals` }));
+  for (const m of bd.meals) {
+    meals.appendChild(
+      el('div', { class: 'day-meal' }, [
+        el('span', { class: 'day-meal-slot', text: titleCase(m.slot) }),
+        m.recipe
+          ? el('button', { class: 'link-btn', text: m.recipe.name, onclick: () => openRecipeModal(m.recipe.id) })
+          : el('span', { class: 'muted', text: 'not planned' }),
+        el('span', { class: 'day-meal-cal', text: m.nutrition ? `${m.nutrition.calories} kcal` : '' }),
+      ])
+    );
+  }
+  box.appendChild(meals);
+}
+
+function renderNutritionWeek(week) {
+  const box = $('#nutrition-week');
+  box.innerHTML = '';
+
+  const table = el('table', { class: 'nutri-table' });
+  const head = el('tr', {}, [el('th', { text: 'Day' })].concat(
+    NUTRIENTS.map((n) => el('th', { text: n.label }))
+  ));
+  table.appendChild(el('thead', {}, [head]));
+
+  const body = el('tbody');
+  for (const day of DAYS) {
+    const t = week.perDay[day];
+    const has = SLOTS.some((s) => state.plan[day][s]);
+    const cells = [el('td', { class: 'day-cell', text: day })].concat(
+      NUTRIENTS.map((n) => el('td', { class: has ? '' : 'muted', text: has ? Math.round(t[n.key]).toLocaleString() : '—' }))
+    );
+    body.appendChild(el('tr', {}, cells));
+  }
+  // Average row.
+  if (week.daysWithMeals) {
+    const avgCells = [el('td', { class: 'day-cell', text: 'Average' })].concat(
+      NUTRIENTS.map((n) => el('td', { class: 'avg', text: Math.round(week.average[n.key]).toLocaleString() }))
+    );
+    body.appendChild(el('tr', { class: 'avg-row' }, avgCells));
+  }
+  table.appendChild(body);
+
+  const scroller = el('div', { class: 'table-scroll' }, [table]);
+  box.appendChild(scroller);
 }
 
 function init() {

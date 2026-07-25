@@ -17,6 +17,7 @@
   <nav class="tabs">
     <div class="wrap">
       <button class="tab-btn active" data-tab="plan">📅 Plan</button>
+      <button class="tab-btn" data-tab="nutrition">📊 Nutrition</button>
       <button class="tab-btn" data-tab="shopping">🛒 Shopping List</button>
     </div>
   </nav>
@@ -80,6 +81,23 @@
       </div>
     </section>
 
+    <!-- ============ NUTRITION TAB ============ -->
+    <section id="nutrition" class="tab-panel">
+      <div class="card">
+        <div class="planner-head">
+          <h2>Daily nutrition</h2>
+          <div class="planner-stats"><span id="nutrition-avg"></span></div>
+        </div>
+        <p class="muted">Totals for each day's planned meals, compared with general daily reference values (about a 2000 kcal diet). Pick a day for the full breakdown. These are guideline references, not medical advice.</p>
+        <div id="nutrition-days" class="day-tabs"></div>
+        <div id="nutrition-detail"></div>
+      </div>
+      <div class="card">
+        <h2>Week at a glance</h2>
+        <div id="nutrition-week" class="nutrition-week"></div>
+      </div>
+    </section>
+
     <!-- ============ SHOPPING TAB ============ -->
     <section id="shopping" class="tab-panel">
       <div class="card">
@@ -106,6 +124,7 @@
       <h2 id="recipe-title"></h2>
       <p id="recipe-meta" class="muted"></p>
       <div id="recipe-tags" class="tag-row"></div>
+      <div id="recipe-nutrition" class="recipe-nutrition"></div>
 
       <h3>Ingredients</h3>
       <ul id="recipe-ingredients" class="ingredient-list"></ul>
@@ -168,6 +187,18 @@
         </div>
 
         <div class="control-group">
+          <span class="control-label">Nutrition per serving (optional)</span>
+          <div class="control-row nutri-inputs">
+            <label class="nutri-field">Protein (g)<input type="number" id="cf-protein" class="num-input" min="0" placeholder="0" /></label>
+            <label class="nutri-field">Carbs (g)<input type="number" id="cf-carbs" class="num-input" min="0" placeholder="0" /></label>
+            <label class="nutri-field">Fat (g)<input type="number" id="cf-fat" class="num-input" min="0" placeholder="0" /></label>
+            <label class="nutri-field">Sugar (g)<input type="number" id="cf-sugar" class="num-input" min="0" placeholder="0" /></label>
+            <label class="nutri-field">Fiber (g)<input type="number" id="cf-fiber" class="num-input" min="0" placeholder="0" /></label>
+            <label class="nutri-field">Sodium (mg)<input type="number" id="cf-sodium" class="num-input" min="0" placeholder="0" /></label>
+          </div>
+        </div>
+
+        <div class="control-group">
           <label class="control-label" for="cf-ingredients">Ingredients — one per line (e.g. "2 cups flour")</label>
           <textarea id="cf-ingredients" class="area-input" rows="6" placeholder="2 cups flour&#10;3 eggs&#10;1 tsp salt"></textarea>
         </div>
@@ -209,6 +240,7 @@
   <script src="js/storage.js"></script>
   <script src="js/suggestions.js"></script>
   <script src="js/shopping.js"></script>
+  <script src="js/nutrition.js"></script>
   <script src="js/custom.js"></script>
   <script src="js/app.js"></script>
 </body>
