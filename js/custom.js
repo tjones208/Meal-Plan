@@ -162,6 +162,14 @@ function buildRecipeFromForm(fields) {
     cookTime: num(fields.cookTime, 0),
     ingredients,
     steps,
+    nutrition: {
+      protein: num(fields.protein, 0),
+      carbs: num(fields.carbs, 0),
+      fat: num(fields.fat, 0),
+      sugar: num(fields.sugar, 0),
+      fiber: num(fields.fiber, 0),
+      sodium: num(fields.sodium, 0),
+    },
     custom: true,
   };
   const url = (fields.sourceUrl || '').trim();

@@ -1,13 +1,12 @@
 /*
  * Recipe database for the Meal Plan app.
  *
- * Each recipe carries everything the four core features need:
+ * Each recipe carries everything the app's features need:
  *   - meal plan creation & suggestions read `tags`, `mealTypes`, `calories`, `servings`
  *   - the shopping list reads `ingredients` (each with quantity + unit + aisle)
  *   - cooking instructions read `steps` and `prepTime` / `cookTime`
- *
- * Ingredient units are kept consistent so quantities can be summed across
- * recipes when building a shopping list (see js/shopping.js).
+ *   - daily nutrition tracking reads `calories` and `nutrition` (per serving:
+ *     protein, carbs, fat, sugar, fiber in grams; sodium in mg)
  *
  * 150 recipes: 50 breakfast, 50 lunch, 50 dinner.
  */
@@ -72,7 +71,15 @@ const RECIPES = [
       "Melt butter in a nonstick pan over low heat.",
       "Pour in eggs and stir slowly with a spatula, folding curds gently.",
       "Remove from heat while still slightly wet and top with chopped chives."
-    ]
+    ],
+    "nutrition": {
+      "protein": 15,
+      "carbs": 2,
+      "fat": 27,
+      "sugar": 1,
+      "fiber": 0,
+      "sodium": 400
+    }
   },
   {
     "id": "bfa-crispy-fried-eggs",
@@ -121,7 +128,15 @@ const RECIPES = [
       "Crack eggs into the hot oil and let the edges bubble and crisp.",
       "Spoon hot oil over the whites until set but yolks stay runny.",
       "Slide onto a plate and finish with sea salt and red pepper flakes."
-    ]
+    ],
+    "nutrition": {
+      "protein": 13,
+      "carbs": 1,
+      "fat": 20,
+      "sugar": 0,
+      "fiber": 0,
+      "sodium": 350
+    }
   },
   {
     "id": "bfa-classic-poached-eggs",
@@ -182,7 +197,15 @@ const RECIPES = [
       "Swirl the water and slip in each egg, poaching 3 minutes.",
       "Meanwhile saute garlic and spinach in olive oil until wilted.",
       "Plate the greens and top with drained poached eggs and salt."
-    ]
+    ],
+    "nutrition": {
+      "protein": 14,
+      "carbs": 4,
+      "fat": 21,
+      "sugar": 1,
+      "fiber": 2,
+      "sodium": 300
+    }
   },
   {
     "id": "bfa-cheese-herb-omelette",
@@ -243,7 +266,15 @@ const RECIPES = [
       "Melt butter in a nonstick pan over medium heat.",
       "Pour in eggs and swirl, lifting edges to let liquid flow underneath.",
       "Scatter cheese and parsley over one half, then fold and slide onto a plate."
-    ]
+    ],
+    "nutrition": {
+      "protein": 28,
+      "carbs": 3,
+      "fat": 30,
+      "sugar": 1,
+      "fiber": 0,
+      "sodium": 650
+    }
   },
   {
     "id": "bfa-western-denver-omelette",
@@ -308,7 +339,15 @@ const RECIPES = [
       "Beat eggs with salt and pour over the vegetables in the pan.",
       "Cook gently, lifting edges until the eggs are nearly set.",
       "Sprinkle cheese over one half, fold, and cook until melted."
-    ]
+    ],
+    "nutrition": {
+      "protein": 30,
+      "carbs": 6,
+      "fat": 30,
+      "sugar": 3,
+      "fiber": 1,
+      "sodium": 800
+    }
   },
   {
     "id": "bfa-veggie-frittata",
@@ -375,7 +414,15 @@ const RECIPES = [
       "Saute sliced zucchini, tomatoes, and onion until softened.",
       "Whisk eggs with salt, pour over the veg, and scatter feta on top.",
       "Bake 18 minutes until set and golden, then cool and slice into wedges."
-    ]
+    ],
+    "nutrition": {
+      "protein": 14,
+      "carbs": 6,
+      "fat": 23,
+      "sugar": 3,
+      "fiber": 1,
+      "sodium": 500
+    }
   },
   {
     "id": "bfa-spinach-mushroom-frittata",
@@ -442,7 +489,15 @@ const RECIPES = [
       "Cook mushrooms and garlic until browned, then wilt in the spinach.",
       "Whisk eggs with parmesan and salt and pour into the pan.",
       "Cook 2 minutes on the stove, then bake 15 minutes until set."
-    ]
+    ],
+    "nutrition": {
+      "protein": 15,
+      "carbs": 5,
+      "fat": 19,
+      "sugar": 2,
+      "fiber": 1,
+      "sodium": 480
+    }
   },
   {
     "id": "bfa-eggs-benedict",
@@ -506,7 +561,15 @@ const RECIPES = [
       "Toast the muffin halves and warm the canadian bacon in a pan.",
       "Poach eggs in simmering water with vinegar for 3 minutes.",
       "Layer bacon and poached eggs on the muffins and spoon hollandaise over."
-    ]
+    ],
+    "nutrition": {
+      "protein": 24,
+      "carbs": 28,
+      "fat": 36,
+      "sugar": 3,
+      "fiber": 2,
+      "sodium": 900
+    }
   },
   {
     "id": "bfa-classic-shakshuka",
@@ -578,7 +641,15 @@ const RECIPES = [
       "Stir in cumin and paprika, then pour in the crushed tomatoes.",
       "Simmer the sauce 10 minutes until thickened.",
       "Make wells, crack in the eggs, cover, and cook until whites set."
-    ]
+    ],
+    "nutrition": {
+      "protein": 12,
+      "carbs": 16,
+      "fat": 20,
+      "sugar": 8,
+      "fiber": 4,
+      "sodium": 600
+    }
   },
   {
     "id": "bfa-green-shakshuka",
@@ -645,7 +716,15 @@ const RECIPES = [
       "Add spinach and cilantro and cook until fully wilted.",
       "Make wells in the greens and crack in the eggs.",
       "Cover and cook until whites set, then crumble feta over the top."
-    ]
+    ],
+    "nutrition": {
+      "protein": 15,
+      "carbs": 8,
+      "fat": 21,
+      "sugar": 3,
+      "fiber": 3,
+      "sodium": 550
+    }
   },
   {
     "id": "bfa-fluffy-buttermilk-pancakes",
@@ -710,7 +789,15 @@ const RECIPES = [
       "In another bowl beat buttermilk, eggs, and melted butter.",
       "Fold wet into dry until just combined, leaving some lumps.",
       "Ladle onto a hot griddle and flip when bubbles form on the surface."
-    ]
+    ],
+    "nutrition": {
+      "protein": 11,
+      "carbs": 48,
+      "fat": 15,
+      "sugar": 8,
+      "fiber": 2,
+      "sodium": 550
+    }
   },
   {
     "id": "bfa-banana-oat-pancakes",
@@ -770,7 +857,15 @@ const RECIPES = [
       "Add bananas, eggs, baking powder, and cinnamon and blend smooth.",
       "Heat coconut oil in a nonstick pan over medium heat.",
       "Pour small rounds and cook until set, flipping once until golden."
-    ]
+    ],
+    "nutrition": {
+      "protein": 12,
+      "carbs": 45,
+      "fat": 12,
+      "sugar": 14,
+      "fiber": 6,
+      "sodium": 250
+    }
   },
   {
     "id": "bfa-belgian-waffles",
@@ -835,7 +930,15 @@ const RECIPES = [
       "Beat in milk, eggs, melted butter, and vanilla until smooth.",
       "Preheat the waffle iron and grease lightly.",
       "Pour in batter and cook until crisp and deeply golden."
-    ]
+    ],
+    "nutrition": {
+      "protein": 10,
+      "carbs": 45,
+      "fat": 22,
+      "sugar": 9,
+      "fiber": 2,
+      "sodium": 480
+    }
   },
   {
     "id": "bfa-cinnamon-french-toast",
@@ -894,7 +997,15 @@ const RECIPES = [
       "Soak each brioche slice for 20 seconds per side.",
       "Melt butter in a skillet over medium heat.",
       "Cook the slices until golden brown on both sides."
-    ]
+    ],
+    "nutrition": {
+      "protein": 14,
+      "carbs": 45,
+      "fat": 22,
+      "sugar": 12,
+      "fiber": 2,
+      "sodium": 450
+    }
   },
   {
     "id": "bfa-classic-crepes",
@@ -953,7 +1064,15 @@ const RECIPES = [
       "Rest the batter 15 minutes at room temperature.",
       "Heat a lightly buttered pan and pour in a thin layer, swirling to coat.",
       "Cook until edges lift, flip briefly, then slide out and repeat."
-    ]
+    ],
+    "nutrition": {
+      "protein": 8,
+      "carbs": 28,
+      "fat": 12,
+      "sugar": 4,
+      "fiber": 1,
+      "sodium": 200
+    }
   },
   {
     "id": "bfa-maple-sausage-patties",
@@ -1014,7 +1133,15 @@ const RECIPES = [
       "Shape into small flat patties with your hands.",
       "Heat a skillet over medium and cook patties 4 minutes per side.",
       "Rest briefly until juices settle and serve hot."
-    ]
+    ],
+    "nutrition": {
+      "protein": 18,
+      "carbs": 4,
+      "fat": 24,
+      "sugar": 3,
+      "fiber": 0,
+      "sodium": 600
+    }
   },
   {
     "id": "bfa-crispy-breakfast-potato-hash",
@@ -1075,7 +1202,15 @@ const RECIPES = [
       "Heat oil in a large skillet over medium-high heat.",
       "Add potatoes, pepper, and onion and spread in a single layer.",
       "Cook without stirring often until crisp, seasoning with paprika and salt."
-    ]
+    ],
+    "nutrition": {
+      "protein": 5,
+      "carbs": 42,
+      "fat": 14,
+      "sugar": 5,
+      "fiber": 5,
+      "sodium": 600
+    }
   },
   {
     "id": "bfa-corned-beef-hash",
@@ -1135,7 +1270,15 @@ const RECIPES = [
       "Saute onion in oil until soft, then add potatoes and brown.",
       "Stir in chopped corned beef and press flat to crisp.",
       "Season with pepper and finish with chopped parsley."
-    ]
+    ],
+    "nutrition": {
+      "protein": 18,
+      "carbs": 28,
+      "fat": 24,
+      "sugar": 3,
+      "fiber": 3,
+      "sodium": 900
+    }
   },
   {
     "id": "bfa-bacon-egg-cheese-sandwich",
@@ -1188,7 +1331,15 @@ const RECIPES = [
       "Toast the muffin halves and butter them lightly.",
       "Fry the eggs in the bacon fat to your preferred doneness.",
       "Stack eggs, bacon, and cheese between the muffin halves."
-    ]
+    ],
+    "nutrition": {
+      "protein": 26,
+      "carbs": 30,
+      "fat": 32,
+      "sugar": 3,
+      "fiber": 2,
+      "sodium": 1100
+    }
   },
   {
     "id": "bfa-lox-cream-cheese-bagel",
@@ -1249,7 +1400,15 @@ const RECIPES = [
       "Layer the smoked salmon over the bottom half.",
       "Top with thin red onion slices, capers, and fresh dill.",
       "Close the bagel and slice in half to serve."
-    ]
+    ],
+    "nutrition": {
+      "protein": 22,
+      "carbs": 50,
+      "fat": 18,
+      "sugar": 6,
+      "fiber": 3,
+      "sodium": 1400
+    }
   },
   {
     "id": "bfa-breakfast-burrito",
@@ -1308,7 +1467,15 @@ const RECIPES = [
       "Crisp the hash browns in the same pan and scramble the eggs.",
       "Warm the tortillas and layer sausage, potatoes, eggs, and cheese.",
       "Spoon on salsa, fold in the sides, and roll into tight burritos."
-    ]
+    ],
+    "nutrition": {
+      "protein": 24,
+      "carbs": 40,
+      "fat": 30,
+      "sugar": 3,
+      "fiber": 3,
+      "sodium": 950
+    }
   },
   {
     "id": "bfa-avocado-toast",
@@ -1369,7 +1536,15 @@ const RECIPES = [
       "Mash the avocado with lemon juice and a pinch of salt.",
       "Spread the avocado thickly over the toast.",
       "Drizzle with olive oil and finish with red pepper flakes."
-    ]
+    ],
+    "nutrition": {
+      "protein": 7,
+      "carbs": 32,
+      "fat": 21,
+      "sugar": 3,
+      "fiber": 7,
+      "sodium": 400
+    }
   },
   {
     "id": "bfa-ricotta-honey-toast",
@@ -1422,7 +1597,15 @@ const RECIPES = [
       "Spread a thick layer of ricotta over each slice.",
       "Top with sliced strawberries and torn mint.",
       "Drizzle generously with honey and serve."
-    ]
+    ],
+    "nutrition": {
+      "protein": 12,
+      "carbs": 45,
+      "fat": 14,
+      "sugar": 22,
+      "fiber": 4,
+      "sodium": 300
+    }
   },
   {
     "id": "bfa-overnight-oats",
@@ -1477,7 +1660,15 @@ const RECIPES = [
       "Fold in half the berries.",
       "Cover and refrigerate overnight to thicken.",
       "Top with the remaining berries before serving."
-    ]
+    ],
+    "nutrition": {
+      "protein": 9,
+      "carbs": 48,
+      "fat": 9,
+      "sugar": 16,
+      "fiber": 9,
+      "sodium": 120
+    }
   },
   {
     "id": "bfa-greek-yogurt-parfait",
@@ -1526,7 +1717,15 @@ const RECIPES = [
       "Add a layer of granola and blueberries.",
       "Repeat the layers until the glasses are full.",
       "Drizzle honey over the top and serve immediately."
-    ]
+    ],
+    "nutrition": {
+      "protein": 20,
+      "carbs": 42,
+      "fat": 8,
+      "sugar": 24,
+      "fiber": 3,
+      "sodium": 120
+    }
   },
   {
     "id": "bfb-classic-rolled-oatmeal",
@@ -1580,7 +1779,15 @@ const RECIPES = [
       "Simmer while stirring for 8 to 10 minutes until creamy.",
       "Divide between two bowls and drizzle with maple syrup.",
       "Top with sliced banana and serve warm."
-    ]
+    ],
+    "nutrition": {
+      "protein": 11,
+      "carbs": 52,
+      "fat": 7,
+      "sugar": 24,
+      "fiber": 5,
+      "sodium": 100
+    }
   },
   {
     "id": "bfb-steel-cut-apple-porridge",
@@ -1640,7 +1847,15 @@ const RECIPES = [
       "Reduce heat and simmer for 25 minutes stirring occasionally.",
       "Grate the apple and fold it in with cinnamon.",
       "Cook 5 minutes more then top with walnuts and honey."
-    ]
+    ],
+    "nutrition": {
+      "protein": 8,
+      "carbs": 55,
+      "fat": 13,
+      "sugar": 28,
+      "fiber": 6,
+      "sodium": 10
+    }
   },
   {
     "id": "bfb-peanut-butter-overnight-oats",
@@ -1695,7 +1910,15 @@ const RECIPES = [
       "Sweeten with maple syrup and mix well.",
       "Cover and refrigerate overnight or at least 6 hours.",
       "Stir and enjoy chilled the next morning."
-    ]
+    ],
+    "nutrition": {
+      "protein": 15,
+      "carbs": 48,
+      "fat": 17,
+      "sugar": 16,
+      "fiber": 8,
+      "sodium": 120
+    }
   },
   {
     "id": "bfb-tropical-overnight-oats",
@@ -1750,7 +1973,15 @@ const RECIPES = [
       "Layer in diced mango and a squeeze of lime.",
       "Cover and chill overnight.",
       "Top with shredded coconut before serving."
-    ]
+    ],
+    "nutrition": {
+      "protein": 7,
+      "carbs": 50,
+      "fat": 13,
+      "sugar": 20,
+      "fiber": 7,
+      "sodium": 30
+    }
   },
   {
     "id": "bfb-vanilla-chia-pudding",
@@ -1805,7 +2036,15 @@ const RECIPES = [
       "Let sit 5 minutes then whisk again to break up clumps.",
       "Cover and refrigerate at least 4 hours until thick.",
       "Spoon into glasses and top with raspberries."
-    ]
+    ],
+    "nutrition": {
+      "protein": 7,
+      "carbs": 30,
+      "fat": 12,
+      "sugar": 15,
+      "fiber": 11,
+      "sodium": 90
+    }
   },
   {
     "id": "bfb-berry-yogurt-parfait",
@@ -1860,7 +2099,15 @@ const RECIPES = [
       "Add a layer of berries then a layer of granola.",
       "Repeat the layers until the glasses are full.",
       "Finish with a drizzle of honey and serve."
-    ]
+    ],
+    "nutrition": {
+      "protein": 18,
+      "carbs": 40,
+      "fat": 7,
+      "sugar": 24,
+      "fiber": 4,
+      "sodium": 80
+    }
   },
   {
     "id": "bfb-honey-almond-granola-bowl",
@@ -1920,7 +2167,15 @@ const RECIPES = [
       "Toss oats and almonds with melted coconut oil, honey and cinnamon.",
       "Spread evenly and bake 25 minutes stirring halfway.",
       "Cool completely then serve in bowls with cold milk."
-    ]
+    ],
+    "nutrition": {
+      "protein": 12,
+      "carbs": 52,
+      "fat": 18,
+      "sugar": 20,
+      "fiber": 6,
+      "sodium": 50
+    }
   },
   {
     "id": "bfb-strawberry-banana-smoothie-bowl",
@@ -1975,7 +2230,15 @@ const RECIPES = [
       "Divide the smoothie between two bowls.",
       "Top with granola and chia seeds.",
       "Serve immediately with a spoon."
-    ]
+    ],
+    "nutrition": {
+      "protein": 6,
+      "carbs": 55,
+      "fat": 6,
+      "sugar": 30,
+      "fiber": 8,
+      "sodium": 40
+    }
   },
   {
     "id": "bfb-green-power-smoothie",
@@ -2030,7 +2293,15 @@ const RECIPES = [
       "Blend on high until completely smooth.",
       "Add chia seeds and pulse briefly.",
       "Pour into glasses and serve cold."
-    ]
+    ],
+    "nutrition": {
+      "protein": 5,
+      "carbs": 45,
+      "fat": 4,
+      "sugar": 26,
+      "fiber": 7,
+      "sodium": 60
+    }
   },
   {
     "id": "bfb-blueberry-oat-muffins",
@@ -2096,7 +2367,15 @@ const RECIPES = [
       "Whisk flour, oats, sugar and baking powder in a bowl.",
       "Stir in egg and milk until just combined then fold in blueberries.",
       "Divide into cups and bake 22 minutes until golden."
-    ]
+    ],
+    "nutrition": {
+      "protein": 6,
+      "carbs": 45,
+      "fat": 6,
+      "sugar": 18,
+      "fiber": 2,
+      "sodium": 180
+    }
   },
   {
     "id": "bfb-cranberry-orange-scones",
@@ -2161,7 +2440,15 @@ const RECIPES = [
       "Rub cold butter into flour, sugar and baking powder until crumbly.",
       "Stir in cream, cranberries and orange zest to form a soft dough.",
       "Shape into a round, cut six wedges and bake 18 minutes."
-    ]
+    ],
+    "nutrition": {
+      "protein": 5,
+      "carbs": 45,
+      "fat": 15,
+      "sugar": 16,
+      "fiber": 2,
+      "sodium": 250
+    }
   },
   {
     "id": "bfb-banana-walnut-bread",
@@ -2227,7 +2514,15 @@ const RECIPES = [
       "Mash bananas and mix with melted butter, sugar and eggs.",
       "Fold in flour, baking soda and walnuts until just combined.",
       "Pour into the pan and bake 55 minutes until a skewer comes out clean."
-    ]
+    ],
+    "nutrition": {
+      "protein": 7,
+      "carbs": 52,
+      "fat": 16,
+      "sugar": 24,
+      "fiber": 3,
+      "sodium": 200
+    }
   },
   {
     "id": "bfb-savory-chicken-congee",
@@ -2287,7 +2582,15 @@ const RECIPES = [
       "Bring to a boil then simmer gently for 55 minutes stirring often.",
       "Shred the chicken and stir it back into the porridge.",
       "Season with soy sauce and top with sliced green onion."
-    ]
+    ],
+    "nutrition": {
+      "protein": 22,
+      "carbs": 40,
+      "fat": 10,
+      "sugar": 2,
+      "fiber": 1,
+      "sodium": 900
+    }
   },
   {
     "id": "bfb-red-chilaquiles-verdes",
@@ -2346,7 +2649,15 @@ const RECIPES = [
       "Warm the salsa verde in a large skillet.",
       "Toss the crisp tortillas in the salsa until lightly coated.",
       "Top with queso fresco, onion, cilantro and sour cream."
-    ]
+    ],
+    "nutrition": {
+      "protein": 13,
+      "carbs": 40,
+      "fat": 24,
+      "sugar": 5,
+      "fiber": 5,
+      "sodium": 600
+    }
   },
   {
     "id": "bfb-ful-medames",
@@ -2413,7 +2724,15 @@ const RECIPES = [
       "Mash roughly and stir in cumin and lemon juice.",
       "Spoon onto a plate and drizzle generously with olive oil.",
       "Top with diced tomato and chopped parsley."
-    ]
+    ],
+    "nutrition": {
+      "protein": 13,
+      "carbs": 40,
+      "fat": 16,
+      "sugar": 4,
+      "fiber": 10,
+      "sodium": 400
+    }
   },
   {
     "id": "bfb-smashed-avocado-toast",
@@ -2468,7 +2787,15 @@ const RECIPES = [
       "Mash the avocado with lemon juice and a pinch of salt.",
       "Spread the avocado over the toast.",
       "Drizzle with olive oil and sprinkle with chili flakes."
-    ]
+    ],
+    "nutrition": {
+      "protein": 7,
+      "carbs": 35,
+      "fat": 19,
+      "sugar": 3,
+      "fiber": 7,
+      "sodium": 350
+    }
   },
   {
     "id": "bfb-cinnamon-breakfast-quinoa",
@@ -2529,7 +2856,15 @@ const RECIPES = [
       "Cook covered for about 18 minutes until the liquid is absorbed.",
       "Stir in maple syrup and fluff with a fork.",
       "Serve topped with pecans and blueberries."
-    ]
+    ],
+    "nutrition": {
+      "protein": 9,
+      "carbs": 45,
+      "fat": 12,
+      "sugar": 16,
+      "fiber": 5,
+      "sodium": 50
+    }
   },
   {
     "id": "bfb-miso-tofu-breakfast-soup",
@@ -2584,7 +2919,15 @@ const RECIPES = [
       "Whisk the miso paste with a little hot water then stir it in.",
       "Add cubed tofu and heat through without boiling.",
       "Ladle into bowls and top with sliced green onion."
-    ]
+    ],
+    "nutrition": {
+      "protein": 12,
+      "carbs": 18,
+      "fat": 10,
+      "sugar": 4,
+      "fiber": 3,
+      "sodium": 900
+    }
   },
   {
     "id": "bfb-apricot-breakfast-couscous",
@@ -2644,7 +2987,15 @@ const RECIPES = [
       "Pour over the couscous and chopped apricots then cover.",
       "Let stand 5 minutes and fluff with a fork.",
       "Drizzle with honey and top with pistachios."
-    ]
+    ],
+    "nutrition": {
+      "protein": 10,
+      "carbs": 58,
+      "fat": 9,
+      "sugar": 20,
+      "fiber": 4,
+      "sodium": 40
+    }
   },
   {
     "id": "bfb-smoked-salmon-bagel",
@@ -2704,7 +3055,15 @@ const RECIPES = [
       "Mix the cream cheese with chopped dill and spread over the bagels.",
       "Layer on smoked salmon and thinly sliced red onion.",
       "Scatter with capers and serve open faced."
-    ]
+    ],
+    "nutrition": {
+      "protein": 22,
+      "carbs": 50,
+      "fat": 17,
+      "sugar": 6,
+      "fiber": 3,
+      "sodium": 1100
+    }
   },
   {
     "id": "bfb-pumpkin-spice-overnight-oats",
@@ -2765,7 +3124,15 @@ const RECIPES = [
       "Stir in the maple syrup until evenly mixed.",
       "Cover and refrigerate overnight.",
       "Top with chopped pecans before serving."
-    ]
+    ],
+    "nutrition": {
+      "protein": 8,
+      "carbs": 48,
+      "fat": 11,
+      "sugar": 16,
+      "fiber": 8,
+      "sodium": 80
+    }
   },
   {
     "id": "bfb-coconut-rice-porridge",
@@ -2826,7 +3193,15 @@ const RECIPES = [
       "Stir often for 25 minutes until soft and creamy.",
       "Sweeten with sugar to taste.",
       "Serve topped with diced mango and shredded coconut."
-    ]
+    ],
+    "nutrition": {
+      "protein": 5,
+      "carbs": 48,
+      "fat": 14,
+      "sugar": 16,
+      "fiber": 2,
+      "sodium": 20
+    }
   },
   {
     "id": "bfb-lemon-poppyseed-muffins",
@@ -2892,7 +3267,15 @@ const RECIPES = [
       "Combine flour, sugar, baking powder and poppy seeds.",
       "Whisk in eggs, yogurt, lemon zest and juice until smooth.",
       "Fill the cups and bake 20 minutes until springy."
-    ]
+    ],
+    "nutrition": {
+      "protein": 7,
+      "carbs": 45,
+      "fat": 8,
+      "sugar": 18,
+      "fiber": 2,
+      "sodium": 180
+    }
   },
   {
     "id": "bfb-dark-chocolate-chia-pudding",
@@ -2947,7 +3330,15 @@ const RECIPES = [
       "Let rest 10 minutes then whisk again to remove clumps.",
       "Cover and chill at least 4 hours until set.",
       "Top with sliced banana before serving."
-    ]
+    ],
+    "nutrition": {
+      "protein": 8,
+      "carbs": 38,
+      "fat": 11,
+      "sugar": 20,
+      "fiber": 12,
+      "sodium": 90
+    }
   },
   {
     "id": "bfb-savory-turkey-sausage-hash",
@@ -3007,7 +3398,15 @@ const RECIPES = [
       "Brown the turkey sausage in olive oil then set aside.",
       "Cook the vegetables with paprika until tender and browned.",
       "Return the sausage to the pan, toss together and serve hot."
-    ]
+    ],
+    "nutrition": {
+      "protein": 20,
+      "carbs": 30,
+      "fat": 22,
+      "sugar": 8,
+      "fiber": 5,
+      "sodium": 650
+    }
   },
   {
     "id": "lna-classic-cobb-salad",
@@ -3073,7 +3472,15 @@ const RECIPES = [
       "Chop the romaine and arrange it on two plates.",
       "Slice the chicken, eggs, avocado, and tomatoes into neat rows.",
       "Scatter blue cheese and bacon on top and serve."
-    ]
+    ],
+    "nutrition": {
+      "protein": 35,
+      "carbs": 12,
+      "fat": 38,
+      "sugar": 5,
+      "fiber": 5,
+      "sodium": 800
+    }
   },
   {
     "id": "lna-caesar-salad",
@@ -3125,7 +3532,15 @@ const RECIPES = [
       "Slice the chicken into strips.",
       "Toss the lettuce with dressing until evenly coated.",
       "Top with chicken, croutons, and shaved parmesan."
-    ]
+    ],
+    "nutrition": {
+      "protein": 35,
+      "carbs": 18,
+      "fat": 30,
+      "sugar": 3,
+      "fiber": 2,
+      "sodium": 900
+    }
   },
   {
     "id": "lna-greek-salad",
@@ -3192,7 +3607,15 @@ const RECIPES = [
       "Combine the vegetables and olives in a bowl.",
       "Drizzle with olive oil and sprinkle oregano.",
       "Top with a slab of feta and serve."
-    ]
+    ],
+    "nutrition": {
+      "protein": 8,
+      "carbs": 10,
+      "fat": 28,
+      "sugar": 6,
+      "fiber": 3,
+      "sodium": 650
+    }
   },
   {
     "id": "lna-nicoise-salad",
@@ -3259,7 +3682,15 @@ const RECIPES = [
       "Arrange greens, potatoes, beans, tomatoes, and olives on a platter.",
       "Flake the tuna on top and add halved eggs.",
       "Drizzle with olive oil before serving."
-    ]
+    ],
+    "nutrition": {
+      "protein": 30,
+      "carbs": 30,
+      "fat": 30,
+      "sugar": 5,
+      "fiber": 6,
+      "sodium": 700
+    }
   },
   {
     "id": "lna-caprese-salad",
@@ -3314,7 +3745,15 @@ const RECIPES = [
       "Alternate the slices on a plate with basil leaves.",
       "Drizzle with olive oil and balsamic glaze.",
       "Season with salt and pepper and serve."
-    ]
+    ],
+    "nutrition": {
+      "protein": 16,
+      "carbs": 12,
+      "fat": 27,
+      "sugar": 8,
+      "fiber": 2,
+      "sodium": 350
+    }
   },
   {
     "id": "lna-kale-caesar",
@@ -3367,7 +3806,15 @@ const RECIPES = [
       "Massage the kale with lemon juice and olive oil for two minutes.",
       "Let it sit for ten minutes to soften.",
       "Top with parmesan and toasted almonds before serving."
-    ]
+    ],
+    "nutrition": {
+      "protein": 9,
+      "carbs": 12,
+      "fat": 28,
+      "sugar": 2,
+      "fiber": 4,
+      "sodium": 300
+    }
   },
   {
     "id": "lna-turkey-club-sandwich",
@@ -3426,7 +3873,15 @@ const RECIPES = [
       "Spread mayonnaise on the toast.",
       "Layer turkey, bacon, lettuce, and tomato in a double stack.",
       "Cut into quarters and secure with picks."
-    ]
+    ],
+    "nutrition": {
+      "protein": 35,
+      "carbs": 40,
+      "fat": 32,
+      "sugar": 6,
+      "fiber": 4,
+      "sodium": 1500
+    }
   },
   {
     "id": "lna-caprese-panini",
@@ -3478,7 +3933,15 @@ const RECIPES = [
       "Spread pesto on the inside of the bread.",
       "Layer mozzarella, tomato, and basil inside.",
       "Press in a hot panini press until golden and melty."
-    ]
+    ],
+    "nutrition": {
+      "protein": 20,
+      "carbs": 48,
+      "fat": 26,
+      "sugar": 5,
+      "fiber": 3,
+      "sodium": 800
+    }
   },
   {
     "id": "lna-veggie-hummus-wrap",
@@ -3540,7 +4003,15 @@ const RECIPES = [
       "Slice the cucumber, carrot, and pepper into thin strips.",
       "Layer the vegetables and spinach across the center.",
       "Roll tightly and slice in half."
-    ]
+    ],
+    "nutrition": {
+      "protein": 11,
+      "carbs": 55,
+      "fat": 15,
+      "sugar": 8,
+      "fiber": 8,
+      "sodium": 650
+    }
   },
   {
     "id": "lna-italian-sub",
@@ -3598,7 +4069,15 @@ const RECIPES = [
       "Layer salami, ham, and provolone inside.",
       "Add shredded lettuce and tomato.",
       "Drizzle with italian dressing and close the sandwich."
-    ]
+    ],
+    "nutrition": {
+      "protein": 30,
+      "carbs": 50,
+      "fat": 35,
+      "sugar": 5,
+      "fiber": 3,
+      "sodium": 1900
+    }
   },
   {
     "id": "lna-egg-salad-sandwich",
@@ -3651,7 +4130,15 @@ const RECIPES = [
       "Chop the eggs and mix with mayonnaise and mustard.",
       "Stir in chopped chives and season to taste.",
       "Spread onto bread and close the sandwiches."
-    ]
+    ],
+    "nutrition": {
+      "protein": 18,
+      "carbs": 28,
+      "fat": 28,
+      "sugar": 4,
+      "fiber": 3,
+      "sodium": 600
+    }
   },
   {
     "id": "lna-tuna-melt",
@@ -3704,7 +4191,15 @@ const RECIPES = [
       "Spread the tuna onto bread and top with cheese.",
       "Close the sandwiches and butter the outsides.",
       "Grill in a pan until golden and the cheese melts."
-    ]
+    ],
+    "nutrition": {
+      "protein": 35,
+      "carbs": 28,
+      "fat": 26,
+      "sugar": 3,
+      "fiber": 2,
+      "sodium": 900
+    }
   },
   {
     "id": "lna-blt-sandwich",
@@ -3756,7 +4251,15 @@ const RECIPES = [
       "Toast the bread and spread with mayonnaise.",
       "Layer bacon, lettuce, and sliced tomato.",
       "Close the sandwich and cut in half."
-    ]
+    ],
+    "nutrition": {
+      "protein": 15,
+      "carbs": 30,
+      "fat": 30,
+      "sugar": 5,
+      "fiber": 3,
+      "sodium": 1100
+    }
   },
   {
     "id": "lna-chicken-avocado-wrap",
@@ -3808,7 +4311,15 @@ const RECIPES = [
       "Spread avocado across the tortilla.",
       "Add chicken and lettuce down the center.",
       "Drizzle with ranch and roll up tightly."
-    ]
+    ],
+    "nutrition": {
+      "protein": 40,
+      "carbs": 35,
+      "fat": 26,
+      "sugar": 3,
+      "fiber": 7,
+      "sodium": 800
+    }
   },
   {
     "id": "lna-classic-tomato-soup",
@@ -3867,7 +4378,15 @@ const RECIPES = [
       "Add the tomatoes and broth and simmer twenty minutes.",
       "Blend the soup until smooth.",
       "Stir in the cream and season before serving."
-    ]
+    ],
+    "nutrition": {
+      "protein": 5,
+      "carbs": 20,
+      "fat": 22,
+      "sugar": 12,
+      "fiber": 4,
+      "sodium": 700
+    }
   },
   {
     "id": "lna-minestrone-soup",
@@ -3935,7 +4454,15 @@ const RECIPES = [
       "Add the tomatoes, beans, and broth and simmer twenty minutes.",
       "Stir in the pasta and cook until tender.",
       "Season to taste and serve hot."
-    ]
+    ],
+    "nutrition": {
+      "protein": 12,
+      "carbs": 55,
+      "fat": 6,
+      "sugar": 9,
+      "fiber": 9,
+      "sodium": 800
+    }
   },
   {
     "id": "lna-chicken-noodle-soup",
@@ -3994,7 +4521,15 @@ const RECIPES = [
       "Simmer the vegetables in broth until tender.",
       "Add the shredded chicken and noodles.",
       "Cook until the noodles are done and season to taste."
-    ]
+    ],
+    "nutrition": {
+      "protein": 28,
+      "carbs": 35,
+      "fat": 9,
+      "sugar": 5,
+      "fiber": 3,
+      "sodium": 900
+    }
   },
   {
     "id": "lna-gazpacho",
@@ -4055,7 +4590,15 @@ const RECIPES = [
       "Blend the vegetables with garlic until smooth.",
       "Add olive oil and vinegar and blend again.",
       "Chill for at least one hour before serving."
-    ]
+    ],
+    "nutrition": {
+      "protein": 4,
+      "carbs": 22,
+      "fat": 20,
+      "sugar": 12,
+      "fiber": 4,
+      "sodium": 500
+    }
   },
   {
     "id": "lna-lentil-soup",
@@ -4116,7 +4659,15 @@ const RECIPES = [
       "Stir in the cumin until fragrant.",
       "Add the lentils and broth and bring to a boil.",
       "Simmer until the lentils break down, then season and serve."
-    ]
+    ],
+    "nutrition": {
+      "protein": 18,
+      "carbs": 55,
+      "fat": 8,
+      "sugar": 6,
+      "fiber": 10,
+      "sodium": 700
+    }
   },
   {
     "id": "lna-quinoa-chickpea-bowl",
@@ -4177,7 +4728,15 @@ const RECIPES = [
       "Rinse and drain the chickpeas.",
       "Dice the cucumber and halve the tomatoes.",
       "Toss everything with lemon juice and olive oil and serve."
-    ]
+    ],
+    "nutrition": {
+      "protein": 16,
+      "carbs": 55,
+      "fat": 18,
+      "sugar": 6,
+      "fiber": 10,
+      "sodium": 450
+    }
   },
   {
     "id": "lna-caprese-orzo-salad",
@@ -4236,7 +4795,15 @@ const RECIPES = [
       "Halve the tomatoes and mozzarella balls.",
       "Toss the orzo with tomatoes, mozzarella, and basil.",
       "Dress with olive oil and balsamic glaze and serve."
-    ]
+    ],
+    "nutrition": {
+      "protein": 14,
+      "carbs": 45,
+      "fat": 19,
+      "sugar": 5,
+      "fiber": 3,
+      "sodium": 300
+    }
   },
   {
     "id": "lna-smoked-salmon-bagel",
@@ -4290,7 +4857,15 @@ const RECIPES = [
       "Spread cream cheese on both halves.",
       "Layer smoked salmon over the cream cheese.",
       "Top with thinly sliced onion and capers."
-    ]
+    ],
+    "nutrition": {
+      "protein": 25,
+      "carbs": 55,
+      "fat": 15,
+      "sugar": 8,
+      "fiber": 3,
+      "sodium": 1200
+    }
   },
   {
     "id": "lna-black-bean-quesadilla",
@@ -4343,7 +4918,15 @@ const RECIPES = [
       "Sprinkle cheese and corn over the beans.",
       "Top with the second tortilla and cook in a hot pan.",
       "Flip once until both sides are golden and cut into wedges."
-    ]
+    ],
+    "nutrition": {
+      "protein": 22,
+      "carbs": 48,
+      "fat": 24,
+      "sugar": 4,
+      "fiber": 9,
+      "sodium": 900
+    }
   },
   {
     "id": "lna-cucumber-avocado-roll",
@@ -4404,7 +4987,15 @@ const RECIPES = [
       "Dice the cucumber and slice the avocado.",
       "Arrange the rice, cucumber, avocado, and edamame in bowls.",
       "Drizzle with soy sauce and sprinkle sesame seeds."
-    ]
+    ],
+    "nutrition": {
+      "protein": 9,
+      "carbs": 60,
+      "fat": 15,
+      "sugar": 4,
+      "fiber": 7,
+      "sodium": 700
+    }
   },
   {
     "id": "lna-buffalo-chicken-wrap",
@@ -4462,7 +5053,15 @@ const RECIPES = [
       "Lay the lettuce and carrot on each tortilla.",
       "Add the buffalo chicken and drizzle with blue cheese dressing.",
       "Roll tightly and slice each wrap in half."
-    ]
+    ],
+    "nutrition": {
+      "protein": 35,
+      "carbs": 35,
+      "fat": 28,
+      "sugar": 4,
+      "fiber": 3,
+      "sodium": 1500
+    }
   },
   {
     "id": "lnb-quinoa-black-bean-buddha-bowl",
@@ -4536,7 +5135,15 @@ const RECIPES = [
       "Warm the drained black beans in a small pan with a pinch of salt.",
       "Divide quinoa among bowls and top with beans, sweet potato, spinach and sliced avocado.",
       "Squeeze lime over the top and serve."
-    ]
+    ],
+    "nutrition": {
+      "protein": 18,
+      "carbs": 62,
+      "fat": 20,
+      "sugar": 8,
+      "fiber": 14,
+      "sodium": 480
+    }
   },
   {
     "id": "lnb-farro-roasted-veg-bowl",
@@ -4609,7 +5216,15 @@ const RECIPES = [
       "Combine farro and roasted vegetables in a large bowl.",
       "Crumble feta over the top and finish with a squeeze of lemon.",
       "Serve warm or chilled for meal prep."
-    ]
+    ],
+    "nutrition": {
+      "protein": 15,
+      "carbs": 58,
+      "fat": 18,
+      "sugar": 8,
+      "fiber": 9,
+      "sodium": 520
+    }
   },
   {
     "id": "lnb-brown-rice-teriyaki-tofu-bowl",
@@ -4677,7 +5292,15 @@ const RECIPES = [
       "Add teriyaki sauce to the tofu and toss to coat, then remove from heat.",
       "Steam broccoli and sliced carrot until just tender.",
       "Serve rice topped with tofu and vegetables and sprinkle with sesame seeds."
-    ]
+    ],
+    "nutrition": {
+      "protein": 24,
+      "carbs": 68,
+      "fat": 18,
+      "sugar": 12,
+      "fiber": 8,
+      "sodium": 900
+    }
   },
   {
     "id": "lnb-salmon-poke-bowl",
@@ -4750,7 +5373,15 @@ const RECIPES = [
       "Slice cucumber, avocado and green onion.",
       "Divide rice among bowls and arrange salmon, cucumber, avocado and edamame on top.",
       "Garnish with green onion and serve."
-    ]
+    ],
+    "nutrition": {
+      "protein": 30,
+      "carbs": 52,
+      "fat": 22,
+      "sugar": 4,
+      "fiber": 7,
+      "sodium": 800
+    }
   },
   {
     "id": "lnb-chana-masala",
@@ -4824,7 +5455,15 @@ const RECIPES = [
       "Add crushed tomatoes and drained chickpeas and simmer for twenty minutes.",
       "Mash a few chickpeas to thicken the sauce.",
       "Season to taste and serve with rice or naan."
-    ]
+    ],
+    "nutrition": {
+      "protein": 15,
+      "carbs": 55,
+      "fat": 13,
+      "sugar": 10,
+      "fiber": 13,
+      "sodium": 600
+    }
   },
   {
     "id": "lnb-soba-noodle-salad",
@@ -4897,7 +5536,15 @@ const RECIPES = [
       "Shred cabbage and carrot and combine with noodles and edamame.",
       "Pour over the dressing and toss well.",
       "Top with sesame seeds and serve chilled."
-    ]
+    ],
+    "nutrition": {
+      "protein": 16,
+      "carbs": 66,
+      "fat": 12,
+      "sugar": 8,
+      "fiber": 7,
+      "sodium": 700
+    }
   },
   {
     "id": "lnb-rice-noodle-salad-peanut",
@@ -4965,7 +5612,15 @@ const RECIPES = [
       "Julienne cucumber and carrot and chop the cilantro.",
       "Toss noodles with vegetables and peanut dressing.",
       "Garnish with extra cilantro and serve."
-    ]
+    ],
+    "nutrition": {
+      "protein": 12,
+      "carbs": 72,
+      "fat": 14,
+      "sugar": 8,
+      "fiber": 5,
+      "sodium": 500
+    }
   },
   {
     "id": "lnb-mediterranean-orzo-salad",
@@ -5037,7 +5692,15 @@ const RECIPES = [
       "Combine orzo, tomatoes, cucumber and olives in a large bowl.",
       "Dress with olive oil and lemon juice and toss.",
       "Fold in crumbled feta and chopped parsley before serving."
-    ]
+    ],
+    "nutrition": {
+      "protein": 11,
+      "carbs": 50,
+      "fat": 19,
+      "sugar": 5,
+      "fiber": 4,
+      "sodium": 650
+    }
   },
   {
     "id": "lnb-falafel-hummus-plate",
@@ -5109,7 +5772,15 @@ const RECIPES = [
       "Pan fry the falafel in olive oil until crisp and golden on both sides.",
       "Warm the pita bread briefly in a dry pan.",
       "Serve falafel with hummus and warm pita."
-    ]
+    ],
+    "nutrition": {
+      "protein": 17,
+      "carbs": 62,
+      "fat": 24,
+      "sugar": 6,
+      "fiber": 12,
+      "sodium": 700
+    }
   },
   {
     "id": "lnb-tabbouleh",
@@ -5177,7 +5848,15 @@ const RECIPES = [
       "Combine bulgur with the chopped herbs and vegetables.",
       "Dress with lemon juice and olive oil and season with salt.",
       "Chill briefly and serve."
-    ]
+    ],
+    "nutrition": {
+      "protein": 6,
+      "carbs": 34,
+      "fat": 18,
+      "sugar": 5,
+      "fiber": 8,
+      "sodium": 300
+    }
   },
   {
     "id": "lnb-chicken-burrito-bowl",
@@ -5249,7 +5928,15 @@ const RECIPES = [
       "Warm the black beans and corn together in a pan.",
       "Build bowls with rice, beans, corn and sliced chicken.",
       "Top with salsa, avocado and a squeeze of lime."
-    ]
+    ],
+    "nutrition": {
+      "protein": 38,
+      "carbs": 58,
+      "fat": 20,
+      "sugar": 6,
+      "fiber": 11,
+      "sodium": 600
+    }
   },
   {
     "id": "lnb-black-bean-quesadilla",
@@ -5310,7 +5997,15 @@ const RECIPES = [
       "Cover with remaining tortillas and cook in an oiled pan until golden.",
       "Flip carefully and cook the second side until the cheese melts.",
       "Slice into wedges and serve with extra salsa."
-    ]
+    ],
+    "nutrition": {
+      "protein": 22,
+      "carbs": 54,
+      "fat": 22,
+      "sugar": 5,
+      "fiber": 10,
+      "sodium": 900
+    }
   },
   {
     "id": "lnb-fish-tacos",
@@ -5376,7 +6071,15 @@ const RECIPES = [
       "Warm the corn tortillas in a dry pan.",
       "Flake the fish and divide among the tortillas.",
       "Top with shredded cabbage and a drizzle of crema."
-    ]
+    ],
+    "nutrition": {
+      "protein": 30,
+      "carbs": 42,
+      "fat": 22,
+      "sugar": 4,
+      "fiber": 6,
+      "sodium": 500
+    }
   },
   {
     "id": "lnb-veggie-burrito-bowl",
@@ -5450,7 +6153,15 @@ const RECIPES = [
       "Warm the pinto beans and corn in a pan.",
       "Assemble bowls with rice, roasted vegetables, beans and corn.",
       "Finish each bowl with a spoonful of salsa."
-    ]
+    ],
+    "nutrition": {
+      "protein": 13,
+      "carbs": 72,
+      "fat": 14,
+      "sugar": 8,
+      "fiber": 12,
+      "sodium": 500
+    }
   },
   {
     "id": "lnb-thai-tofu-rice-bowl",
@@ -5518,7 +6229,15 @@ const RECIPES = [
       "Add sliced bell pepper and cook until crisp tender.",
       "Stir in soy sauce and thai basil until the leaves wilt.",
       "Serve the tofu over rice."
-    ]
+    ],
+    "nutrition": {
+      "protein": 22,
+      "carbs": 66,
+      "fat": 18,
+      "sugar": 6,
+      "fiber": 6,
+      "sodium": 850
+    }
   },
   {
     "id": "lnb-tuna-poke-bowl",
@@ -5585,7 +6304,15 @@ const RECIPES = [
       "Slice cucumber and avocado.",
       "Divide rice among bowls and top with tuna, cucumber and avocado.",
       "Sprinkle with sesame seeds and serve."
-    ]
+    ],
+    "nutrition": {
+      "protein": 32,
+      "carbs": 52,
+      "fat": 16,
+      "sugar": 4,
+      "fiber": 6,
+      "sodium": 800
+    }
   },
   {
     "id": "lnb-chicken-teriyaki-rice-bowl",
@@ -5651,7 +6378,15 @@ const RECIPES = [
       "Add teriyaki sauce to the chicken and toss to glaze.",
       "Steam the broccoli until tender.",
       "Serve chicken and broccoli over rice topped with green onion and sesame seeds."
-    ]
+    ],
+    "nutrition": {
+      "protein": 30,
+      "carbs": 60,
+      "fat": 22,
+      "sugar": 12,
+      "fiber": 5,
+      "sodium": 1000
+    }
   },
   {
     "id": "lnb-greek-hummus-bowl",
@@ -5718,7 +6453,15 @@ const RECIPES = [
       "Arrange tomatoes, cucumber, olives and drained chickpeas over the hummus.",
       "Crumble feta on top and drizzle with olive oil.",
       "Serve immediately with pita if desired."
-    ]
+    ],
+    "nutrition": {
+      "protein": 16,
+      "carbs": 42,
+      "fat": 26,
+      "sugar": 6,
+      "fiber": 11,
+      "sodium": 800
+    }
   },
   {
     "id": "lnb-shrimp-rice-noodle-bowl",
@@ -5786,7 +6529,15 @@ const RECIPES = [
       "Whisk lime juice with fish sauce for the dressing.",
       "Toss noodles with shrimp, julienned carrot and cilantro.",
       "Pour over the dressing and serve."
-    ]
+    ],
+    "nutrition": {
+      "protein": 30,
+      "carbs": 62,
+      "fat": 8,
+      "sugar": 5,
+      "fiber": 4,
+      "sodium": 1100
+    }
   },
   {
     "id": "lnb-coconut-chickpea-curry",
@@ -5854,7 +6605,15 @@ const RECIPES = [
       "Add drained chickpeas and coconut milk and simmer for twenty minutes.",
       "Fold in the spinach and cook until wilted.",
       "Season to taste and serve over rice."
-    ]
+    ],
+    "nutrition": {
+      "protein": 12,
+      "carbs": 42,
+      "fat": 28,
+      "sugar": 8,
+      "fiber": 11,
+      "sodium": 500
+    }
   },
   {
     "id": "lnb-caprese-pasta-salad",
@@ -5914,7 +6673,15 @@ const RECIPES = [
       "Combine pasta, tomatoes, mozzarella and torn basil.",
       "Dress with olive oil and balsamic vinegar.",
       "Toss gently and serve at room temperature."
-    ]
+    ],
+    "nutrition": {
+      "protein": 15,
+      "carbs": 54,
+      "fat": 18,
+      "sugar": 6,
+      "fiber": 4,
+      "sodium": 350
+    }
   },
   {
     "id": "lnb-carnitas-taco-bowl",
@@ -5986,7 +6753,15 @@ const RECIPES = [
       "Add a splash of water and simmer until the pork is tender, then shred.",
       "Warm the black beans in a small pan.",
       "Build bowls with rice, beans and carnitas and finish with lime and cilantro."
-    ]
+    ],
+    "nutrition": {
+      "protein": 32,
+      "carbs": 58,
+      "fat": 30,
+      "sugar": 4,
+      "fiber": 9,
+      "sodium": 600
+    }
   },
   {
     "id": "lnb-mezze-plate",
@@ -6052,7 +6827,15 @@ const RECIPES = [
       "Cut the pita bread into triangles.",
       "Arrange the dips, vegetables, olives and feta on a large plate.",
       "Serve as a shared mezze platter."
-    ]
+    ],
+    "nutrition": {
+      "protein": 15,
+      "carbs": 50,
+      "fat": 26,
+      "sugar": 6,
+      "fiber": 10,
+      "sodium": 900
+    }
   },
   {
     "id": "lnb-egg-fried-rice",
@@ -6119,7 +6902,15 @@ const RECIPES = [
       "Stir in soy sauce and sesame oil.",
       "Return the eggs and toss to combine.",
       "Top with sliced green onion and serve."
-    ]
+    ],
+    "nutrition": {
+      "protein": 13,
+      "carbs": 62,
+      "fat": 14,
+      "sugar": 4,
+      "fiber": 4,
+      "sodium": 750
+    }
   },
   {
     "id": "lnb-cauliflower-rice-taco-bowl",
@@ -6186,7 +6977,15 @@ const RECIPES = [
       "Divide the cauliflower rice between two bowls.",
       "Top with beans, sliced avocado, salsa and cheddar.",
       "Serve warm."
-    ]
+    ],
+    "nutrition": {
+      "protein": 15,
+      "carbs": 38,
+      "fat": 20,
+      "sugar": 7,
+      "fiber": 13,
+      "sodium": 700
+    }
   },
   {
     "id": "dna-roast-chicken-thyme",
@@ -6245,7 +7044,15 @@ const RECIPES = [
       "Rub the skin with olive oil, salt, thyme and minced garlic.",
       "Stuff the cavity with halved lemon and roast for 75 minutes.",
       "Rest for 10 minutes before carving and serving."
-    ]
+    ],
+    "nutrition": {
+      "protein": 48,
+      "carbs": 2,
+      "fat": 46,
+      "sugar": 1,
+      "fiber": 1,
+      "sodium": 650
+    }
   },
   {
     "id": "dna-grilled-chicken-fajitas",
@@ -6304,7 +7111,15 @@ const RECIPES = [
       "Toss with olive oil and chili powder.",
       "Grill the chicken over high heat until charred and cooked through.",
       "Char the vegetables, then serve everything wrapped in warm tortillas."
-    ]
+    ],
+    "nutrition": {
+      "protein": 42,
+      "carbs": 44,
+      "fat": 20,
+      "sugar": 8,
+      "fiber": 5,
+      "sodium": 800
+    }
   },
   {
     "id": "dna-chicken-parmesan",
@@ -6363,7 +7178,15 @@ const RECIPES = [
       "Pan fry until golden on both sides.",
       "Top with marinara and mozzarella, then bake at 200C/400F for 15 minutes.",
       "Serve hot over pasta or greens."
-    ]
+    ],
+    "nutrition": {
+      "protein": 45,
+      "carbs": 55,
+      "fat": 22,
+      "sugar": 8,
+      "fiber": 5,
+      "sodium": 1000
+    }
   },
   {
     "id": "dna-baked-lemon-herb-chicken",
@@ -6418,7 +7241,15 @@ const RECIPES = [
       "Coat the thighs and arrange in a baking dish.",
       "Bake for 35 minutes until the skin is crisp and juices run clear.",
       "Scatter with parsley before serving."
-    ]
+    ],
+    "nutrition": {
+      "protein": 40,
+      "carbs": 3,
+      "fat": 44,
+      "sugar": 1,
+      "fiber": 1,
+      "sodium": 700
+    }
   },
   {
     "id": "dna-turkey-meatballs",
@@ -6477,7 +7308,15 @@ const RECIPES = [
       "Brown the meatballs in a skillet.",
       "Pour over crushed tomatoes and simmer for 20 minutes.",
       "Serve over rice or pasta."
-    ]
+    ],
+    "nutrition": {
+      "protein": 35,
+      "carbs": 20,
+      "fat": 28,
+      "sugar": 6,
+      "fiber": 3,
+      "sodium": 650
+    }
   },
   {
     "id": "dna-turkey-chili",
@@ -6538,7 +7377,15 @@ const RECIPES = [
       "Stir in chili powder and cumin.",
       "Add beans and tomatoes and simmer for 40 minutes.",
       "Season to taste and serve hot."
-    ]
+    ],
+    "nutrition": {
+      "protein": 34,
+      "carbs": 34,
+      "fat": 18,
+      "sugar": 8,
+      "fiber": 9,
+      "sodium": 800
+    }
   },
   {
     "id": "dna-pan-seared-steak",
@@ -6593,7 +7440,15 @@ const RECIPES = [
       "Sear each side for 3 minutes for medium rare.",
       "Add butter, garlic and rosemary and baste the steaks.",
       "Rest for 5 minutes before slicing."
-    ]
+    ],
+    "nutrition": {
+      "protein": 46,
+      "carbs": 2,
+      "fat": 55,
+      "sugar": 0,
+      "fiber": 0,
+      "sodium": 800
+    }
   },
   {
     "id": "dna-beef-meatballs",
@@ -6652,7 +7507,15 @@ const RECIPES = [
       "Form into balls and brown in a hot skillet.",
       "Simmer the meatballs in marinara for 20 minutes.",
       "Serve over spaghetti with extra parmesan."
-    ]
+    ],
+    "nutrition": {
+      "protein": 34,
+      "carbs": 22,
+      "fat": 38,
+      "sugar": 6,
+      "fiber": 3,
+      "sodium": 750
+    }
   },
   {
     "id": "dna-pork-chops-apple",
@@ -6712,7 +7575,15 @@ const RECIPES = [
       "Saute sliced apple and onion in the same pan.",
       "Pour in cider and thyme and simmer to reduce.",
       "Return the chops and cook through, then serve."
-    ]
+    ],
+    "nutrition": {
+      "protein": 38,
+      "carbs": 24,
+      "fat": 34,
+      "sugar": 16,
+      "fiber": 3,
+      "sodium": 500
+    }
   },
   {
     "id": "dna-beef-stew",
@@ -6773,7 +7644,15 @@ const RECIPES = [
       "Stir in tomato paste and broth.",
       "Cover and simmer for 2 hours until the beef is tender.",
       "Season and serve with crusty bread."
-    ]
+    ],
+    "nutrition": {
+      "protein": 35,
+      "carbs": 32,
+      "fat": 26,
+      "sugar": 6,
+      "fiber": 5,
+      "sodium": 700
+    }
   },
   {
     "id": "dna-beef-bolognese",
@@ -6832,7 +7711,15 @@ const RECIPES = [
       "Add the beef and brown thoroughly.",
       "Pour in crushed tomatoes and simmer gently for 90 minutes.",
       "Cook the spaghetti and toss with the sauce."
-    ]
+    ],
+    "nutrition": {
+      "protein": 32,
+      "carbs": 55,
+      "fat": 26,
+      "sugar": 10,
+      "fiber": 5,
+      "sodium": 650
+    }
   },
   {
     "id": "dna-pork-carnitas",
@@ -6893,7 +7780,15 @@ const RECIPES = [
       "Place in a pot with onion, orange juice and broth.",
       "Cover and cook low for 3 hours until fork tender.",
       "Shred the pork and crisp under the broiler before serving."
-    ]
+    ],
+    "nutrition": {
+      "protein": 40,
+      "carbs": 8,
+      "fat": 38,
+      "sugar": 4,
+      "fiber": 1,
+      "sodium": 700
+    }
   },
   {
     "id": "dna-classic-lasagna",
@@ -6954,7 +7849,15 @@ const RECIPES = [
       "Layer noodles, meat sauce, ricotta and mozzarella in a baking dish.",
       "Bake at 190C/375F for 50 minutes until bubbling.",
       "Rest for 15 minutes before slicing."
-    ]
+    ],
+    "nutrition": {
+      "protein": 40,
+      "carbs": 58,
+      "fat": 34,
+      "sugar": 10,
+      "fiber": 5,
+      "sodium": 1000
+    }
   },
   {
     "id": "dna-spaghetti-carbonara",
@@ -7007,7 +7910,15 @@ const RECIPES = [
       "Whisk eggs with parmesan and black pepper.",
       "Toss hot drained pasta with pancetta then stir in the egg mixture off the heat.",
       "Loosen with pasta water and serve immediately."
-    ]
+    ],
+    "nutrition": {
+      "protein": 30,
+      "carbs": 62,
+      "fat": 28,
+      "sugar": 3,
+      "fiber": 3,
+      "sodium": 900
+    }
   },
   {
     "id": "dna-pesto-pasta-chicken",
@@ -7060,7 +7971,15 @@ const RECIPES = [
       "Toss the hot pasta with pesto and shredded chicken.",
       "Fold in halved cherry tomatoes.",
       "Top with parmesan and serve."
-    ]
+    ],
+    "nutrition": {
+      "protein": 32,
+      "carbs": 58,
+      "fat": 24,
+      "sugar": 4,
+      "fiber": 4,
+      "sodium": 550
+    }
   },
   {
     "id": "dna-baked-ziti",
@@ -7114,7 +8033,15 @@ const RECIPES = [
       "Mix pasta with marinara and ricotta.",
       "Spread into a dish and top with mozzarella and parmesan.",
       "Bake at 190C/375F for 35 minutes until golden."
-    ]
+    ],
+    "nutrition": {
+      "protein": 28,
+      "carbs": 62,
+      "fat": 28,
+      "sugar": 10,
+      "fiber": 5,
+      "sodium": 800
+    }
   },
   {
     "id": "dna-fettuccine-alfredo",
@@ -7168,7 +8095,15 @@ const RECIPES = [
       "Melt butter with garlic, then add cream and simmer.",
       "Whisk in parmesan until smooth.",
       "Toss the pasta in the sauce and serve at once."
-    ]
+    ],
+    "nutrition": {
+      "protein": 22,
+      "carbs": 60,
+      "fat": 40,
+      "sugar": 4,
+      "fiber": 3,
+      "sodium": 700
+    }
   },
   {
     "id": "dna-shepherds-pie",
@@ -7228,7 +8163,15 @@ const RECIPES = [
       "Brown the lamb with carrot, then add peas and broth.",
       "Spread the meat into a dish and top with mashed potato.",
       "Bake at 200C/400F for 25 minutes until the top is golden."
-    ]
+    ],
+    "nutrition": {
+      "protein": 28,
+      "carbs": 40,
+      "fat": 34,
+      "sugar": 6,
+      "fiber": 6,
+      "sodium": 650
+    }
   },
   {
     "id": "dna-pot-roast",
@@ -7289,7 +8232,15 @@ const RECIPES = [
       "Add onion, carrot, potato, garlic and broth.",
       "Cover and braise at 160C/325F for 3 hours.",
       "Slice the beef and serve with the vegetables and pan juices."
-    ]
+    ],
+    "nutrition": {
+      "protein": 42,
+      "carbs": 28,
+      "fat": 30,
+      "sugar": 6,
+      "fiber": 4,
+      "sodium": 650
+    }
   },
   {
     "id": "dna-mac-and-cheese",
@@ -7349,7 +8300,15 @@ const RECIPES = [
       "Make a roux with butter and flour, then whisk in milk.",
       "Stir in the cheeses until smooth and combine with the pasta.",
       "Bake at 190C/375F for 25 minutes until bubbling and golden."
-    ]
+    ],
+    "nutrition": {
+      "protein": 28,
+      "carbs": 58,
+      "fat": 38,
+      "sugar": 6,
+      "fiber": 3,
+      "sodium": 850
+    }
   },
   {
     "id": "dna-chicken-pot-pie",
@@ -7408,7 +8367,15 @@ const RECIPES = [
       "Stir in the chicken and vegetables.",
       "Line a dish with one crust, add the filling and top with the second crust.",
       "Bake at 200C/400F for 40 minutes until golden."
-    ]
+    ],
+    "nutrition": {
+      "protein": 28,
+      "carbs": 48,
+      "fat": 36,
+      "sugar": 5,
+      "fiber": 4,
+      "sodium": 800
+    }
   },
   {
     "id": "dna-beef-tacos",
@@ -7462,7 +8429,15 @@ const RECIPES = [
       "Stir in taco seasoning with a splash of water.",
       "Warm the taco shells.",
       "Fill the shells with beef, cheese and lettuce."
-    ]
+    ],
+    "nutrition": {
+      "protein": 30,
+      "carbs": 32,
+      "fat": 28,
+      "sugar": 3,
+      "fiber": 4,
+      "sodium": 700
+    }
   },
   {
     "id": "dna-chicken-stir-fry",
@@ -7522,7 +8497,15 @@ const RECIPES = [
       "Add broccoli, ginger and garlic.",
       "Pour in soy sauce and toss until glossy.",
       "Serve over steamed rice."
-    ]
+    ],
+    "nutrition": {
+      "protein": 38,
+      "carbs": 18,
+      "fat": 28,
+      "sugar": 6,
+      "fiber": 4,
+      "sodium": 900
+    }
   },
   {
     "id": "dna-bbq-pulled-pork",
@@ -7576,22 +8559,29 @@ const RECIPES = [
       "Slow cook covered for 4 hours until it shreds easily.",
       "Shred the pork and toss with barbecue sauce.",
       "Pile onto toasted buns and serve."
-    ]
+    ],
+    "nutrition": {
+      "protein": 34,
+      "carbs": 45,
+      "fat": 32,
+      "sugar": 18,
+      "fiber": 3,
+      "sodium": 900
+    }
   },
   {
-    "id": "dna-chicken-parmesan-2",
-    "name": "Chicken Parmesan",
+    "id": "dna-chicken-piccata",
+    "name": "Chicken Piccata",
     "mealTypes": [
       "dinner"
     ],
     "tags": [
-      "high-protein",
-      "kid-friendly"
+      "high-protein"
     ],
     "servings": 4,
-    "calories": 610,
-    "prepTime": 20,
-    "cookTime": 30,
+    "calories": 490,
+    "prepTime": 15,
+    "cookTime": 20,
     "ingredients": [
       {
         "item": "chicken breast",
@@ -7600,49 +8590,63 @@ const RECIPES = [
         "aisle": "Meat & Seafood"
       },
       {
-        "item": "breadcrumbs",
-        "qty": 1,
+        "item": "flour",
+        "qty": 0.5,
         "unit": "cup",
-        "aisle": "Grains & Pasta"
+        "aisle": "Condiments & Baking"
       },
       {
-        "item": "egg",
-        "qty": 2,
-        "unit": "unit",
+        "item": "butter",
+        "qty": 3,
+        "unit": "tbsp",
         "aisle": "Dairy & Eggs"
       },
       {
-        "item": "marinara sauce",
-        "qty": 1,
-        "unit": "can",
+        "item": "lemon",
+        "qty": 2,
+        "unit": "unit",
+        "aisle": "Produce"
+      },
+      {
+        "item": "capers",
+        "qty": 2,
+        "unit": "tbsp",
         "aisle": "Canned Goods"
       },
       {
-        "item": "mozzarella",
-        "qty": 1.5,
+        "item": "chicken broth",
+        "qty": 1,
         "unit": "cup",
-        "aisle": "Dairy & Eggs"
+        "aisle": "Canned Goods"
       },
       {
-        "item": "parmesan",
-        "qty": 0.5,
-        "unit": "cup",
-        "aisle": "Dairy & Eggs"
+        "item": "garlic",
+        "qty": 2,
+        "unit": "clove",
+        "aisle": "Produce"
       },
       {
-        "item": "spaghetti",
-        "qty": 400,
-        "unit": "g",
-        "aisle": "Grains & Pasta"
+        "item": "parsley",
+        "qty": 0.25,
+        "unit": "cup",
+        "aisle": "Produce"
       }
     ],
     "steps": [
-      "Pound the chicken breasts thin, dip in beaten egg and coat in breadcrumbs mixed with parmesan.",
-      "Pan-fry the cutlets until golden on both sides, about 3 minutes per side.",
-      "Top each cutlet with marinara and mozzarella in a baking dish.",
-      "Bake at 200C/400F for 20 minutes until the cheese is melted and bubbling.",
-      "Serve over cooked spaghetti with extra sauce."
-    ]
+      "Pound the chicken breasts thin, then dredge lightly in seasoned flour.",
+      "Sear in butter over medium-high heat until golden, about 3 minutes per side, then set aside.",
+      "Add garlic to the pan, then deglaze with chicken broth and the juice of both lemons.",
+      "Stir in the capers and simmer until the sauce thickens slightly, about 4 minutes.",
+      "Return the chicken to coat, finish with chopped parsley and serve."
+    ],
+    "nutrition": {
+      "protein": 42,
+      "carbs": 18,
+      "fat": 26,
+      "sugar": 2,
+      "fiber": 1,
+      "sodium": 780
+    }
   },
   {
     "id": "dnb-honey-garlic-salmon",
@@ -7702,7 +8706,15 @@ const RECIPES = [
       "Sear salmon in olive oil skin side down for 4 minutes.",
       "Flip, pour glaze over and cook 4 more minutes basting often.",
       "Rest 2 minutes then spoon pan sauce over the fillets."
-    ]
+    ],
+    "nutrition": {
+      "protein": 40,
+      "carbs": 20,
+      "fat": 28,
+      "sugar": 10,
+      "fiber": 1,
+      "sodium": 620
+    }
   },
   {
     "id": "dnb-garlic-butter-shrimp",
@@ -7763,7 +8775,15 @@ const RECIPES = [
       "Add garlic and red pepper flakes and cook 30 seconds.",
       "Add shrimp and cook 2 minutes per side until pink.",
       "Finish with lemon juice and chopped parsley."
-    ]
+    ],
+    "nutrition": {
+      "protein": 38,
+      "carbs": 6,
+      "fat": 27,
+      "sugar": 2,
+      "fiber": 1,
+      "sodium": 720
+    }
   },
   {
     "id": "dnb-baked-cod-tomato",
@@ -7823,7 +8843,15 @@ const RECIPES = [
       "Arrange cod in a baking dish and surround with tomatoes and olives.",
       "Drizzle with olive oil, scatter capers and oregano, and season.",
       "Bake 20 minutes until fish flakes easily."
-    ]
+    ],
+    "nutrition": {
+      "protein": 36,
+      "carbs": 12,
+      "fat": 23,
+      "sugar": 5,
+      "fiber": 3,
+      "sodium": 760
+    }
   },
   {
     "id": "dnb-seared-tuna-sesame",
@@ -7878,7 +8906,15 @@ const RECIPES = [
       "Heat sesame oil in a pan over high heat until shimmering.",
       "Sear tuna 90 seconds per side leaving centers rare.",
       "Slice thin and serve with soy sauce and grated ginger."
-    ]
+    ],
+    "nutrition": {
+      "protein": 44,
+      "carbs": 10,
+      "fat": 24,
+      "sugar": 1,
+      "fiber": 3,
+      "sodium": 650
+    }
   },
   {
     "id": "dnb-fish-tacos-slaw",
@@ -7937,7 +8973,15 @@ const RECIPES = [
       "Season fish with chili powder and pan fry 3 minutes per side.",
       "Warm tortillas in a dry skillet.",
       "Flake fish into tortillas and top with slaw and sour cream."
-    ]
+    ],
+    "nutrition": {
+      "protein": 28,
+      "carbs": 48,
+      "fat": 26,
+      "sugar": 6,
+      "fiber": 6,
+      "sodium": 620
+    }
   },
   {
     "id": "dnb-seafood-linguine",
@@ -8002,7 +9046,15 @@ const RECIPES = [
       "Saute garlic in olive oil then add tomatoes and wine.",
       "Add mussels and shrimp, cover and steam until shells open.",
       "Toss with pasta and a splash of pasta water to coat."
-    ]
+    ],
+    "nutrition": {
+      "protein": 34,
+      "carbs": 64,
+      "fat": 22,
+      "sugar": 5,
+      "fiber": 4,
+      "sodium": 700
+    }
   },
   {
     "id": "dnb-quinoa-stuffed-peppers",
@@ -8062,7 +9114,15 @@ const RECIPES = [
       "Cook quinoa then mix with beans, corn and cumin.",
       "Fill peppers with the mixture and top with cheese.",
       "Bake 35 minutes until peppers are tender and cheese melts."
-    ]
+    ],
+    "nutrition": {
+      "protein": 20,
+      "carbs": 58,
+      "fat": 18,
+      "sugar": 8,
+      "fiber": 11,
+      "sodium": 620
+    }
   },
   {
     "id": "dnb-eggplant-parmesan",
@@ -8120,7 +9180,15 @@ const RECIPES = [
       "Dip slices in beaten egg then breadcrumbs and bake 20 minutes.",
       "Layer eggplant, marinara and mozzarella in a dish.",
       "Top with parmesan and bake 20 minutes until bubbling."
-    ]
+    ],
+    "nutrition": {
+      "protein": 26,
+      "carbs": 46,
+      "fat": 28,
+      "sugar": 12,
+      "fiber": 8,
+      "sodium": 900
+    }
   },
   {
     "id": "dnb-coconut-veggie-curry",
@@ -8187,7 +9255,15 @@ const RECIPES = [
       "Stir in curry powder and cook until fragrant.",
       "Add coconut milk, cauliflower and chickpeas and simmer 20 minutes.",
       "Fold in spinach until wilted and season to taste."
-    ]
+    ],
+    "nutrition": {
+      "protein": 14,
+      "carbs": 40,
+      "fat": 28,
+      "sugar": 8,
+      "fiber": 10,
+      "sodium": 500
+    }
   },
   {
     "id": "dnb-crispy-tofu-bowl",
@@ -8248,7 +9324,15 @@ const RECIPES = [
       "Whisk peanut butter and soy sauce with a little water into a sauce.",
       "Steam broccoli and cook the rice.",
       "Build bowls with rice, tofu and broccoli then drizzle with peanut sauce."
-    ]
+    ],
+    "nutrition": {
+      "protein": 24,
+      "carbs": 54,
+      "fat": 22,
+      "sugar": 6,
+      "fiber": 6,
+      "sodium": 700
+    }
   },
   {
     "id": "dnb-smoky-bean-chili",
@@ -8315,7 +9399,15 @@ const RECIPES = [
       "Add tomatoes and all the beans with a cup of water.",
       "Simmer uncovered 40 minutes stirring occasionally.",
       "Season and serve topped with fresh cilantro."
-    ]
+    ],
+    "nutrition": {
+      "protein": 22,
+      "carbs": 68,
+      "fat": 7,
+      "sugar": 10,
+      "fiber": 18,
+      "sodium": 650
+    }
   },
   {
     "id": "dnb-mushroom-risotto",
@@ -8380,7 +9472,15 @@ const RECIPES = [
       "Cook onion, add rice and toast one minute then add wine.",
       "Add warm broth one ladle at a time stirring until absorbed.",
       "Fold in mushrooms and parmesan and serve creamy."
-    ]
+    ],
+    "nutrition": {
+      "protein": 16,
+      "carbs": 74,
+      "fat": 21,
+      "sugar": 4,
+      "fiber": 4,
+      "sodium": 800
+    }
   },
   {
     "id": "dnb-beef-broccoli-stirfry",
@@ -8439,7 +9539,15 @@ const RECIPES = [
       "Sear beef in a hot wok until browned then remove.",
       "Stir fry broccoli, garlic and ginger for 4 minutes.",
       "Return beef, add remaining soy sauce and toss to glaze."
-    ]
+    ],
+    "nutrition": {
+      "protein": 36,
+      "carbs": 22,
+      "fat": 32,
+      "sugar": 6,
+      "fiber": 4,
+      "sodium": 900
+    }
   },
   {
     "id": "dnb-kung-pao-chicken",
@@ -8499,7 +9607,15 @@ const RECIPES = [
       "Add dried chilies and garlic and cook 1 minute.",
       "Pour in soy sauce and rice vinegar and toss to coat.",
       "Stir in peanuts and serve over rice."
-    ]
+    ],
+    "nutrition": {
+      "protein": 32,
+      "carbs": 18,
+      "fat": 32,
+      "sugar": 5,
+      "fiber": 3,
+      "sodium": 850
+    }
   },
   {
     "id": "dnb-veggie-pad-thai",
@@ -8564,7 +9680,15 @@ const RECIPES = [
       "Scramble eggs in a hot wok then push aside.",
       "Add noodles, tamarind and soy sauce and toss to coat.",
       "Fold in bean sprouts, top with peanuts and lime."
-    ]
+    ],
+    "nutrition": {
+      "protein": 16,
+      "carbs": 72,
+      "fat": 18,
+      "sugar": 8,
+      "fiber": 4,
+      "sodium": 750
+    }
   },
   {
     "id": "dnb-cashew-chicken",
@@ -8624,7 +9748,15 @@ const RECIPES = [
       "Cook peppers and garlic 3 minutes in the hot wok.",
       "Return chicken with oyster and soy sauces and toss.",
       "Add cashews, heat through and serve."
-    ]
+    ],
+    "nutrition": {
+      "protein": 36,
+      "carbs": 22,
+      "fat": 30,
+      "sugar": 8,
+      "fiber": 3,
+      "sodium": 800
+    }
   },
   {
     "id": "dnb-thai-green-curry",
@@ -8684,7 +9816,15 @@ const RECIPES = [
       "Add chicken and coat then pour in remaining coconut milk.",
       "Simmer 15 minutes then add green beans and fish sauce.",
       "Cook 5 minutes more and stir in fresh basil."
-    ]
+    ],
+    "nutrition": {
+      "protein": 30,
+      "carbs": 20,
+      "fat": 38,
+      "sugar": 6,
+      "fiber": 4,
+      "sodium": 900
+    }
   },
   {
     "id": "dnb-chana-masala",
@@ -8745,7 +9885,15 @@ const RECIPES = [
       "Add garam masala and toast for 1 minute.",
       "Stir in tomatoes and chickpeas and simmer 25 minutes.",
       "Mash a few chickpeas to thicken and season to taste."
-    ]
+    ],
+    "nutrition": {
+      "protein": 18,
+      "carbs": 64,
+      "fat": 12,
+      "sugar": 10,
+      "fiber": 15,
+      "sodium": 650
+    }
   },
   {
     "id": "dnb-japanese-katsu-curry",
@@ -8810,7 +9958,15 @@ const RECIPES = [
       "Slowly add broth stirring into a smooth sauce.",
       "Add sweet potato and simmer 20 minutes until tender.",
       "Serve the curry over steamed rice."
-    ]
+    ],
+    "nutrition": {
+      "protein": 12,
+      "carbs": 108,
+      "fat": 14,
+      "sugar": 14,
+      "fiber": 10,
+      "sodium": 700
+    }
   },
   {
     "id": "dnb-fajita-sheet-pan",
@@ -8870,7 +10026,15 @@ const RECIPES = [
       "Slice chicken and vegetables and spread on a sheet pan.",
       "Toss with olive oil and fajita seasoning.",
       "Roast 25 minutes and finish with lime juice."
-    ]
+    ],
+    "nutrition": {
+      "protein": 44,
+      "carbs": 20,
+      "fat": 24,
+      "sugar": 8,
+      "fiber": 4,
+      "sodium": 700
+    }
   },
   {
     "id": "dnb-cajun-jambalaya",
@@ -8936,7 +10100,15 @@ const RECIPES = [
       "Add peppers and cajun seasoning and cook 5 minutes.",
       "Stir in rice, tomatoes and broth and simmer covered 20 minutes.",
       "Add shrimp and cook 5 minutes until pink and rice is tender."
-    ]
+    ],
+    "nutrition": {
+      "protein": 28,
+      "carbs": 62,
+      "fat": 24,
+      "sugar": 5,
+      "fiber": 3,
+      "sodium": 1100
+    }
   },
   {
     "id": "dnb-vegetable-paella",
@@ -9003,7 +10175,15 @@ const RECIPES = [
       "Stir in rice to coat in the sofrito.",
       "Pour in broth and green beans and do not stir.",
       "Simmer 20 minutes until liquid absorbs and a crust forms."
-    ]
+    ],
+    "nutrition": {
+      "protein": 12,
+      "carbs": 88,
+      "fat": 8,
+      "sugar": 8,
+      "fiber": 6,
+      "sodium": 800
+    }
   },
   {
     "id": "dnb-ratatouille-bake",
@@ -9064,7 +10244,15 @@ const RECIPES = [
       "Slice all vegetables into thin rounds.",
       "Arrange in a spiral in a baking dish and drizzle with oil and herbs.",
       "Cover and bake 45 minutes until tender."
-    ]
+    ],
+    "nutrition": {
+      "protein": 6,
+      "carbs": 30,
+      "fat": 28,
+      "sugar": 14,
+      "fiber": 9,
+      "sodium": 400
+    }
   },
   {
     "id": "dnb-miso-glazed-cod",
@@ -9118,7 +10306,15 @@ const RECIPES = [
       "Coat cod and let sit 10 minutes.",
       "Broil 8 to 10 minutes until caramelized and flaky.",
       "Garnish with sliced scallions."
-    ]
+    ],
+    "nutrition": {
+      "protein": 32,
+      "carbs": 12,
+      "fat": 30,
+      "sugar": 6,
+      "fiber": 1,
+      "sodium": 900
+    }
   },
   {
     "id": "dnb-black-bean-enchilada-bake",
@@ -9178,7 +10374,15 @@ const RECIPES = [
       "Mix beans, corn and cumin with half the enchilada sauce.",
       "Layer tortillas, bean mixture, sauce and cheese in a dish.",
       "Bake 30 minutes until cheese is melted and bubbling."
-    ]
+    ],
+    "nutrition": {
+      "protein": 22,
+      "carbs": 54,
+      "fat": 22,
+      "sugar": 6,
+      "fiber": 10,
+      "sodium": 900
+    }
   }
 ];
 
@@ -9213,7 +10417,7 @@ const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'];
 // User-created recipes, loaded from localStorage at startup (see js/storage.js
 // and js/custom.js). They are merged with the built-in RECIPES everywhere the
 // app looks up recipes, so custom meals show up in the planner, suggestions,
-// shopping list and cooking instructions just like built-in ones.
+// shopping list, cooking instructions and nutrition totals just like built-ins.
 let CUSTOM_RECIPES = [];
 
 function setCustomRecipes(list) {
