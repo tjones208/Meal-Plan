@@ -187,6 +187,28 @@ function adjustPlanToLimits(plan, prefs, limits) {
   };
 }
 
+// Research-based guidance for the share of calories that should come from fat.
+// The Acceptable Macronutrient Distribution Range (AMDR) from the National
+// Academies of Sciences (Institute of Medicine) is 20-35% of total calories
+// from fat for adults; the WHO advises keeping total fat at or below 30%.
+const FAT_PERCENT_REC = {
+  min: 20,
+  max: 35,
+  suggested: 30,
+  note: 'Recommended: 20-35% of calories from fat (AMDR, National Academies of Sciences). The WHO advises keeping total fat at or below 30%.',
+};
+
+// Percent of a nutrition total's calories that come from fat (9 kcal/g).
+function fatCaloriePercent(totals) {
+  if (!totals || totals.calories <= 0) return 0;
+  return Math.round(((totals.fat * 9) / totals.calories) * 100);
+}
+
+// Percent of a single recipe's calories from fat.
+function recipeFatPercent(recipe) {
+  return fatCaloriePercent(recipeNutrition(recipe));
+}
+
 // Macro split as a share of calories (protein/carbs each 4 kcal/g, fat 9).
 function macroSplit(totals) {
   const p = totals.protein * 4;

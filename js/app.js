@@ -152,27 +152,52 @@ function countFilled() {
  * ------------------------------------------------------------------ */
 function openPicker(day, slot) {
   pickerTarget = { day, slot };
-  const modal = $('#picker-modal');
   $('#picker-title').textContent = `Choose a ${slot} for ${day}`;
+  $('#picker-search').value = '';
+  renderPickerList('');
+  $('#picker-modal').classList.add('open');
+  $('#picker-search').focus();
+}
 
+// Render the picker list for the current target, filtered by a search query.
+function renderPickerList(query) {
+  if (!pickerTarget) return;
   const list = $('#picker-list');
   list.innerHTML = '';
 
-  const suggestions = suggestForSlot(slot, prefs, 12);
-  if (suggestions.length === 0) {
-    list.appendChild(el('p', { class: 'muted', text: 'No recipes match your current filters.' }));
+  const all = mealsForSlot(pickerTarget.slot, prefs);
+  const q = (query || '').trim().toLowerCase();
+  const shown = q ? all.filter((r) => r.name.toLowerCase().includes(q)) : all;
+
+  $('#picker-count').textContent = `${shown.length} meal${shown.length === 1 ? '' : 's'}`;
+  if (shown.length === 0) {
+    list.appendChild(el('p', { class: 'muted', text: 'No meals match. Try a different search or loosen your dietary filters.' }));
+    return;
   }
 
-  for (const recipe of suggestions) {
-    const card = el('button', { class: 'picker-card', onclick: () => choosePickerRecipe(recipe.id) }, [
-      el('div', { class: 'picker-card-name', text: recipe.name }),
-      el('div', { class: 'picker-card-meta', text: `${recipe.calories} kcal · ${recipe.prepTime + recipe.cookTime} min · serves ${recipe.servings}` }),
-      el('div', { class: 'tag-row' }, recipe.tags.slice(0, 3).map((t) => el('span', { class: 'tag', text: t }))),
+  for (const recipe of shown) {
+    const fatPct = recipeFatPercent(recipe);
+    const card = el('div', { class: 'picker-card' }, [
+      el('button', { class: 'picker-card-btn', onclick: () => choosePickerRecipe(recipe.id) }, [
+        el('div', { class: 'picker-card-name', text: recipe.name + (recipe.custom ? ' ★' : '') }),
+        el('div', { class: 'picker-card-meta', text: `${recipe.calories} kcal · ${fatPct}% fat · ${recipe.prepTime + recipe.cookTime} min · serves ${recipe.servings}` }),
+        el('div', { class: 'tag-row' }, recipe.tags.slice(0, 3).map((t) => el('span', { class: 'tag', text: t }))),
+      ]),
+      recipe.custom
+        ? null
+        : el('button', {
+            class: 'picker-hide',
+            title: 'Remove from suggestions',
+            text: '✕ hide',
+            onclick: (e) => {
+              e.stopPropagation();
+              hideRecipe(recipe.id);
+              renderPickerList($('#picker-search').value);
+            },
+          }),
     ]);
     list.appendChild(card);
   }
-
-  modal.classList.add('open');
 }
 
 function choosePickerRecipe(recipeId) {
@@ -382,6 +407,22 @@ function openRecipeModal(recipeId) {
         },
       })
     );
+  } else if (isHidden(recipe.id)) {
+    actions.appendChild(
+      el('button', {
+        class: 'btn ghost small',
+        text: '↩ Restore to suggestions',
+        onclick: () => { restoreRecipe(recipe.id); closeRecipeModal(); },
+      })
+    );
+  } else {
+    actions.appendChild(
+      el('button', {
+        class: 'btn ghost small danger-btn',
+        text: '🚫 Remove from suggestions',
+        onclick: () => { hideRecipe(recipe.id); closeRecipeModal(); },
+      })
+    );
   }
 
   $('#recipe-modal').classList.add('open');
@@ -420,6 +461,7 @@ function initControls() {
   $('#btn-generate').addEventListener('click', autoGenerate);
   $('#btn-clear').addEventListener('click', clearPlan);
   $('#btn-copy-shopping').addEventListener('click', copyShoppingList);
+  $('#picker-search').addEventListener('input', (e) => renderPickerList(e.target.value));
 
   // Modal close handlers.
   document.querySelectorAll('[data-close]').forEach((btn) => {
@@ -631,6 +673,53 @@ function renderCustomList() {
   }
 }
 
+// Remove a meal from suggestions/plans (built-in recipes the user dislikes).
+function hideRecipe(id) {
+  if (!state.hidden.includes(id)) state.hidden.push(id);
+  setHiddenIds(state.hidden);
+  // Pull it out of any planned slots too.
+  for (const day of DAYS) {
+    for (const slot of SLOTS) {
+      if (state.plan[day][slot] === id) state.plan[day][slot] = null;
+    }
+  }
+  saveState(state);
+  renderPlanner();
+  renderHiddenList();
+}
+
+function restoreRecipe(id) {
+  state.hidden = state.hidden.filter((x) => x !== id);
+  setHiddenIds(state.hidden);
+  saveState(state);
+  renderHiddenList();
+}
+
+// The "Removed meals" list with restore buttons.
+function renderHiddenList() {
+  const container = $('#hidden-list');
+  container.innerHTML = '';
+  const ids = state.hidden.filter((id) => getRecipeById(id));
+  $('#hidden-count').textContent = ids.length ? `${ids.length} removed` : '';
+
+  if (ids.length === 0) {
+    container.appendChild(el('p', { class: 'muted', text: 'No removed meals. Use “Remove from suggestions” on any meal you dislike.' }));
+    return;
+  }
+
+  for (const id of ids) {
+    const recipe = getRecipeById(id);
+    const row = el('div', { class: 'custom-row' }, [
+      el('div', { class: 'custom-row-main' }, [
+        el('button', { class: 'link-btn', text: recipe.name, title: 'View recipe', onclick: () => openRecipeModal(id) }),
+        el('div', { class: 'custom-row-meta', text: recipe.mealTypes.map(titleCase).join(', ') }),
+      ]),
+      el('button', { class: 'link-btn', text: 'Restore', onclick: () => restoreRecipe(id) }),
+    ]);
+    container.appendChild(row);
+  }
+}
+
 /* ------------------------------------------------------------------ *
  * Feature 6: Daily nutrition tracking
  * ------------------------------------------------------------------ */
@@ -701,6 +790,23 @@ function renderNutritionDetail(day) {
     splitBar,
   ]));
 
+  // Fat as a percentage of calories vs. the user's target and the AMDR range.
+  const fatPct = fatCaloriePercent(bd.totals);
+  const target = state.fatPercent || FAT_PERCENT_REC.suggested;
+  const withinRange = fatPct >= FAT_PERCENT_REC.min && fatPct <= FAT_PERCENT_REC.max;
+  const overTarget = fatPct > target;
+  const status = overTarget
+    ? `over your ${target}% target`
+    : withinRange
+    ? `within target (recommended ${FAT_PERCENT_REC.min}-${FAT_PERCENT_REC.max}%)`
+    : `below your ${target}% target`;
+  box.appendChild(
+    el('div', { class: 'fat-pct-status' + (overTarget ? ' over' : ' ok') }, [
+      el('span', { class: 'fat-pct-big', text: `${fatPct}%` }),
+      el('span', { text: ` of calories from fat — ${status}` }),
+    ])
+  );
+
   // Nutrient rows with progress toward the daily reference.
   const rows = el('div', { class: 'nutri-rows' });
   for (const n of NUTRIENTS) {
@@ -723,13 +829,18 @@ function renderNutritionDetail(day) {
   // Meals that make up the day.
   const meals = el('div', { class: 'day-meals' });
   meals.appendChild(el('h3', { class: 'day-meals-title', text: `${day} meals` }));
+  const mealFatTarget = state.fatPercent || FAT_PERCENT_REC.suggested;
   for (const m of bd.meals) {
+    const fatPct = m.recipe ? recipeFatPercent(m.recipe) : null;
     meals.appendChild(
       el('div', { class: 'day-meal' }, [
         el('span', { class: 'day-meal-slot', text: titleCase(m.slot) }),
         m.recipe
           ? el('button', { class: 'link-btn', text: m.recipe.name, onclick: () => openRecipeModal(m.recipe.id) })
           : el('span', { class: 'muted', text: 'not planned' }),
+        fatPct !== null
+          ? el('span', { class: 'day-meal-fat' + (fatPct > mealFatTarget ? ' over' : ''), text: `${fatPct}% fat` })
+          : el('span', {}),
         el('span', { class: 'day-meal-cal', text: m.nutrition ? `${m.nutrition.calories} kcal` : '' }),
       ])
     );
@@ -788,6 +899,21 @@ function initLimits() {
   };
   cal.addEventListener('input', save);
   fat.addEventListener('input', save);
+
+  // Fat as a percentage of calories, with a research-based recommendation.
+  const fp = $('#fat-percent');
+  fp.value = state.fatPercent || FAT_PERCENT_REC.suggested;
+  $('#fat-rec-note').textContent = FAT_PERCENT_REC.note;
+  const saveFatPct = (v) => {
+    state.fatPercent = Number.isFinite(v) && v > 0 && v <= 100 ? v : FAT_PERCENT_REC.suggested;
+    saveState(state);
+    renderNutrition();
+  };
+  fp.addEventListener('input', () => saveFatPct(parseInt(fp.value, 10)));
+  $('#btn-fat-rec').addEventListener('click', () => {
+    fp.value = FAT_PERCENT_REC.suggested;
+    saveFatPct(FAT_PERCENT_REC.suggested);
+  });
 
   $('#btn-adjust').addEventListener('click', adjustToLimits);
 }
@@ -863,12 +989,14 @@ function adjustToLimits() {
 
 function init() {
   setCustomRecipes(loadCustomRecipes());
+  setHiddenIds(state.hidden);
   initTabs();
   initControls();
   initCustomControls();
   initLimits();
   renderPlanner();
   renderCustomList();
+  renderHiddenList();
 }
 
 document.addEventListener('DOMContentLoaded', init);

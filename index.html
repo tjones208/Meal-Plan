@@ -79,6 +79,16 @@
         </div>
         <div id="custom-list" class="custom-list"></div>
       </div>
+
+      <!-- Removed meals -->
+      <div class="card">
+        <div class="planner-head">
+          <h2>Removed meals</h2>
+          <div class="planner-stats"><span id="hidden-count"></span></div>
+        </div>
+        <p class="muted">Meals you remove will not appear in the picker, suggestions or auto-generated plans. Restore any of them here.</p>
+        <div id="hidden-list" class="custom-list"></div>
+      </div>
     </section>
 
     <!-- ============ NUTRITION TAB ============ -->
@@ -96,7 +106,15 @@
             <label class="control-label" for="limit-fat">Weekly fat limit (g)</label>
             <input type="number" id="limit-fat" class="num-input" min="0" step="10" placeholder="No limit" />
           </div>
+          <div class="control-group">
+            <label class="control-label" for="fat-percent">Target fat (% of calories)</label>
+            <div class="fat-pct-row">
+              <input type="number" id="fat-percent" class="num-input" min="0" max="100" step="1" />
+              <button id="btn-fat-rec" class="btn ghost small" type="button">Use 30%</button>
+            </div>
+          </div>
         </div>
+        <p id="fat-rec-note" class="muted"></p>
         <div id="weekly-progress" class="weekly-progress"></div>
         <div class="btn-row">
           <button id="btn-adjust" class="btn primary">⚖️ Adjust plan to fit limits</button>
@@ -246,7 +264,11 @@
     <div class="modal-box">
       <button class="modal-close" data-close="picker" aria-label="Close">×</button>
       <h2 id="picker-title">Choose a meal</h2>
-      <p class="muted">Suggestions matching your dietary preferences. Click one to add it.</p>
+      <p class="muted">All meals for this slot that match your dietary filters. Click one to add it, or hide ones you dislike.</p>
+      <div class="picker-controls">
+        <input type="text" id="picker-search" class="text-input" placeholder="Search meals…" />
+        <span id="picker-count" class="picker-count"></span>
+      </div>
       <div id="picker-list" class="picker-list"></div>
     </div>
   </div>

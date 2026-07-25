@@ -36,6 +36,11 @@ function defaultState() {
     checkedItems: {},
     // Weekly nutrition budgets. null = no limit set.
     limits: { calories: null, fat: null },
+    // Recipe ids the user removed; excluded from suggestions & auto-generate.
+    hidden: [],
+    // Target share of calories from fat (%). Default is the mid/upper of the
+    // recommended 20-35% AMDR range (see js/nutrition.js).
+    fatPercent: 30,
   };
 }
 
@@ -68,6 +73,11 @@ function loadState() {
         fat: Number.isFinite(f) && f > 0 ? f : null,
       };
     }
+    if (Array.isArray(parsed.hidden)) {
+      state.hidden = parsed.hidden.filter((id) => typeof id === 'string');
+    }
+    const fp = Number(parsed.fatPercent);
+    if (Number.isFinite(fp) && fp > 0 && fp <= 100) state.fatPercent = fp;
     return state;
   } catch (err) {
     console.warn('Could not load saved plan, starting fresh.', err);
