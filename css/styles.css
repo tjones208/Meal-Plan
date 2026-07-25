@@ -330,15 +330,16 @@ main { padding: 24px 0 60px; }
   position: absolute;
   top: 8px;
   right: 8px;
-  background: none;
-  border: none;
-  color: var(--muted);
+  background: #fff;
+  border: 1px solid var(--line);
+  color: var(--danger);
   font-size: 0.72rem;
+  font-weight: 600;
   cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 6px;
+  padding: 3px 8px;
+  border-radius: 999px;
 }
-.picker-hide:hover { color: var(--danger); background: #fdeede; }
+.picker-hide:hover { background: #fdeede; border-color: var(--danger); }
 
 /* Picker controls (search + count) */
 .picker-controls { display: flex; align-items: center; gap: 12px; margin: 8px 0 4px; }

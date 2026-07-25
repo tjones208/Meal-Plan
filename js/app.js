@@ -187,8 +187,8 @@ function renderPickerList(query) {
         ? null
         : el('button', {
             class: 'picker-hide',
-            title: 'Remove from suggestions',
-            text: '✕ hide',
+            title: 'Remove this meal from suggestions',
+            text: '🚫 Remove',
             onclick: (e) => {
               e.stopPropagation();
               hideRecipe(recipe.id);
@@ -958,33 +958,41 @@ function renderWeeklyProgress() {
 
 function adjustToLimits() {
   const note = $('#adjust-note');
-  if (!state.limits.calories && !state.limits.fat) {
+
+  // The adjuster targets any of: weekly calorie limit, weekly fat limit, and
+  // the fat-% target (which always has a value).
+  const budget = {
+    calories: state.limits.calories,
+    fat: state.limits.fat,
+    fatPercent: state.fatPercent || null,
+  };
+  if (!budget.calories && !budget.fat && !budget.fatPercent) {
     note.className = 'note warn';
-    note.textContent = 'Set a weekly calorie or fat limit first.';
+    note.textContent = 'Set a weekly calorie limit, weekly fat limit, or fat-% target first.';
     return;
   }
-  const filled = countFilled();
-  if (filled === 0) {
+  if (countFilled() === 0) {
     note.className = 'note warn';
     note.textContent = 'Plan some meals first (use Generate week on the Plan tab), then adjust.';
     return;
   }
 
   readPrefs(); // respect current dietary filters when swapping
-  const result = adjustPlanToLimits(state.plan, prefs, state.limits);
+  const result = adjustPlanToLimits(state.plan, prefs, budget);
   state.plan = result.plan;
   saveState(state);
   renderPlanner();
   renderNutrition();
 
   const parts = [];
-  if (state.limits.calories) parts.push(`${Math.round(result.totals.calories).toLocaleString()} / ${state.limits.calories.toLocaleString()} kcal`);
-  if (state.limits.fat) parts.push(`${Math.round(result.totals.fat).toLocaleString()} / ${state.limits.fat.toLocaleString()} g fat`);
-  const allMet = result.met.calories && result.met.fat;
+  if (budget.calories) parts.push(`${Math.round(result.totals.calories).toLocaleString()} / ${budget.calories.toLocaleString()} kcal`);
+  if (budget.fat) parts.push(`${Math.round(result.totals.fat).toLocaleString()} / ${budget.fat.toLocaleString()} g fat`);
+  if (budget.fatPercent) parts.push(`${fatCaloriePercent(result.totals)}% / ${budget.fatPercent}% fat`);
+  const allMet = result.met.calories && result.met.fat && result.met.fatPercent;
   note.className = allMet ? 'note ok' : 'note warn';
   note.textContent = allMet
-    ? `Adjusted with ${result.swaps} swap${result.swaps === 1 ? '' : 's'} — week now ${parts.join(' · ')}, within your limits.`
-    : `Adjusted with ${result.swaps} swap${result.swaps === 1 ? '' : 's'} to ${parts.join(' · ')}. That is as low as the current recipes and filters allow; loosen a dietary filter or lower the limit target to go further.`;
+    ? `Adjusted with ${result.swaps} swap${result.swaps === 1 ? '' : 's'} — week now ${parts.join(' · ')}, within target.`
+    : `Adjusted with ${result.swaps} swap${result.swaps === 1 ? '' : 's'} to ${parts.join(' · ')}. That is as close as the current recipes and filters allow; loosen a dietary filter or raise a target to go further.`;
 }
 
 function init() {

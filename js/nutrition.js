@@ -119,15 +119,22 @@ function weekTotals(plan) {
  * from recipes valid for that slot. Returns best effort if a limit cannot be
  * met with the available recipes.
  *
- * limits = { calories: number|null, fat: number|null }
- * Returns { plan, totals, met: { calories, fat }, swaps }
+ * budget = { calories: number|null, fat: number|null, fatPercent: number|null }
+ *   - calories:   weekly calorie ceiling (kcal)
+ *   - fat:        weekly fat ceiling (grams)
+ *   - fatPercent: target share of calories from fat (%), applied to the week
+ * Any subset may be set; the adjuster honours all that are present. The two
+ * fat constraints (gram ceiling and % target) both drive "reduce fat".
+ *
+ * Returns { plan, totals, met: { calories, fat, fatPercent }, swaps }
  */
-function adjustPlanToLimits(plan, prefs, limits) {
+function adjustPlanToLimits(plan, prefs, budget) {
   const p = JSON.parse(JSON.stringify(plan));
-  const hasCal = limits && limits.calories > 0;
-  const hasFat = limits && limits.fat > 0;
-  if (!hasCal && !hasFat) {
-    return { plan: p, totals: weekTotals(p), met: { calories: true, fat: true }, swaps: 0 };
+  const hasCal = budget && budget.calories > 0;
+  const hasFatGram = budget && budget.fat > 0;
+  const hasFatPct = budget && budget.fatPercent > 0;
+  if (!hasCal && !hasFatGram && !hasFatPct) {
+    return { plan: p, totals: weekTotals(p), met: { calories: true, fat: true, fatPercent: true }, swaps: 0 };
   }
 
   // Candidate pool per slot: diet-matching recipes for that slot (ignore the
@@ -137,12 +144,14 @@ function adjustPlanToLimits(plan, prefs, limits) {
   for (const slot of SLOTS) pools[slot] = candidatesForSlot(slot, poolPrefs);
 
   let swaps = 0;
-  const MAX_ITERS = 300;
+  const MAX_ITERS = 400;
   for (let iter = 0; iter < MAX_ITERS; iter++) {
     const totals = weekTotals(p);
-    const overCal = hasCal && totals.calories > limits.calories;
-    const overFat = hasFat && totals.fat > limits.fat;
-    if (!overCal && !overFat) break;
+    const curFatPct = fatCaloriePercent(totals);
+    const overCal = hasCal && totals.calories > budget.calories;
+    const overFatGram = hasFatGram && totals.fat > budget.fat;
+    const overFatPct = hasFatPct && curFatPct > budget.fatPercent;
+    if (!overCal && !overFatGram && !overFatPct) break;
 
     let best = null; // { day, slot, id, gain }
     for (const day of DAYS) {
@@ -155,17 +164,23 @@ function adjustPlanToLimits(plan, prefs, limits) {
         for (const cand of pools[slot]) {
           if (cand.id === id) continue;
           const cN = recipeNutrition(cand);
-          const dCal = curN.calories - cN.calories; // >0 means fewer calories
-          const dFat = curN.fat - cN.fat; // >0 means less fat
-          // Never worsen a limit that is currently exceeded.
-          if (overCal && dCal < 0) continue;
-          if (overFat && dFat < 0) continue;
-          // Reward reductions in the exceeded metric(s); scale calories so it
-          // is comparable in magnitude to grams of fat.
+          // Resulting weekly totals if we made this swap.
+          const newCal = totals.calories - curN.calories + cN.calories;
+          const newFat = totals.fat - curN.fat + cN.fat;
+          const newFatPct = newCal > 0 ? ((newFat * 9) / newCal) * 100 : 0;
+
+          // Never worsen a constraint that is currently exceeded.
+          if (overCal && newCal > totals.calories) continue;
+          if (overFatGram && newFat > totals.fat) continue;
+          if (overFatPct && newFatPct > curFatPct + 1e-9) continue;
+
+          // Reward reductions in the exceeded constraint(s), scaled to be
+          // comparable in magnitude (grams of fat as the base unit).
           let gain = 0;
-          if (overFat) gain += Math.max(0, dFat);
-          if (overCal) gain += Math.max(0, dCal) / 15;
-          if (gain <= 0) continue;
+          if (overCal) gain += (totals.calories - newCal) / 15;
+          if (overFatGram) gain += totals.fat - newFat;
+          if (overFatPct) gain += (curFatPct - newFatPct) * 3;
+          if (gain <= 1e-9) continue;
           if (!best || gain > best.gain) best = { day, slot, id: cand.id, gain };
         }
       }
@@ -180,8 +195,9 @@ function adjustPlanToLimits(plan, prefs, limits) {
     plan: p,
     totals,
     met: {
-      calories: !hasCal || totals.calories <= limits.calories,
-      fat: !hasFat || totals.fat <= limits.fat,
+      calories: !hasCal || totals.calories <= budget.calories,
+      fat: !hasFatGram || totals.fat <= budget.fat,
+      fatPercent: !hasFatPct || fatCaloriePercent(totals) <= budget.fatPercent,
     },
     swaps,
   };
