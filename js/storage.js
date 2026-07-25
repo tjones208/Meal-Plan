@@ -34,6 +34,8 @@ function defaultState() {
     plan: emptyPlan(),
     // Items the user has ticked off the shopping list, keyed by item name.
     checkedItems: {},
+    // Weekly nutrition budgets. null = no limit set.
+    limits: { calories: null, fat: null },
   };
 }
 
@@ -57,6 +59,14 @@ function loadState() {
     }
     if (parsed.checkedItems && typeof parsed.checkedItems === 'object') {
       state.checkedItems = parsed.checkedItems;
+    }
+    if (parsed.limits && typeof parsed.limits === 'object') {
+      const c = Number(parsed.limits.calories);
+      const f = Number(parsed.limits.fat);
+      state.limits = {
+        calories: Number.isFinite(c) && c > 0 ? c : null,
+        fat: Number.isFinite(f) && f > 0 ? f : null,
+      };
     }
     return state;
   } catch (err) {

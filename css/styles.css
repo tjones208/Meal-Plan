@@ -439,6 +439,11 @@ main { padding: 24px 0 60px; }
 .nutri-table .avg { color: var(--brand-dark); }
 .nutri-table td.muted { color: var(--muted); }
 
+/* Weekly limits progress */
+.weekly-progress { display: grid; gap: 16px; margin: 16px 0 4px; }
+.limit-hint { font-size: 0.8rem; color: var(--accent); margin-top: 4px; }
+.limit-hint.over { color: var(--danger); font-weight: 600; }
+
 /* Custom form: nutrition inputs */
 .nutri-inputs { gap: 12px; }
 .nutri-field { display: flex; flex-direction: column; font-size: 0.78rem; color: var(--muted); gap: 4px; }
