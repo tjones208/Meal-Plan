@@ -101,6 +101,92 @@ function weekNutrition(plan) {
   return { perDay, average, daysWithMeals };
 }
 
+// Summed totals across the whole week (all planned meals).
+function weekTotals(plan) {
+  let totals = emptyTotals();
+  for (const day of DAYS) totals = addTotals(totals, dayNutrition(plan, day));
+  return totals;
+}
+
+/*
+ * Adjust a plan so its weekly calorie and/or fat totals fit under the given
+ * limits, by swapping planned meals for lower-calorie / lower-fat options.
+ *
+ * Greedy and safe: on each pass it makes the single swap that most reduces a
+ * limit currently being exceeded, and never chooses a swap that would worsen
+ * an exceeded limit — so the exceeded totals strictly decrease and the loop
+ * always terminates. Swaps respect the active dietary filters and only draw
+ * from recipes valid for that slot. Returns best effort if a limit cannot be
+ * met with the available recipes.
+ *
+ * limits = { calories: number|null, fat: number|null }
+ * Returns { plan, totals, met: { calories, fat }, swaps }
+ */
+function adjustPlanToLimits(plan, prefs, limits) {
+  const p = JSON.parse(JSON.stringify(plan));
+  const hasCal = limits && limits.calories > 0;
+  const hasFat = limits && limits.fat > 0;
+  if (!hasCal && !hasFat) {
+    return { plan: p, totals: weekTotals(p), met: { calories: true, fat: true }, swaps: 0 };
+  }
+
+  // Candidate pool per slot: diet-matching recipes for that slot (ignore the
+  // per-meal calorie cap so we can reach the lowest-fat / lowest-calorie options).
+  const poolPrefs = { diets: (prefs && prefs.diets) || [], maxCalories: 0, slots: SLOTS };
+  const pools = {};
+  for (const slot of SLOTS) pools[slot] = candidatesForSlot(slot, poolPrefs);
+
+  let swaps = 0;
+  const MAX_ITERS = 300;
+  for (let iter = 0; iter < MAX_ITERS; iter++) {
+    const totals = weekTotals(p);
+    const overCal = hasCal && totals.calories > limits.calories;
+    const overFat = hasFat && totals.fat > limits.fat;
+    if (!overCal && !overFat) break;
+
+    let best = null; // { day, slot, id, gain }
+    for (const day of DAYS) {
+      for (const slot of SLOTS) {
+        const id = p[day][slot];
+        if (!id) continue;
+        const cur = getRecipeById(id);
+        if (!cur) continue;
+        const curN = recipeNutrition(cur);
+        for (const cand of pools[slot]) {
+          if (cand.id === id) continue;
+          const cN = recipeNutrition(cand);
+          const dCal = curN.calories - cN.calories; // >0 means fewer calories
+          const dFat = curN.fat - cN.fat; // >0 means less fat
+          // Never worsen a limit that is currently exceeded.
+          if (overCal && dCal < 0) continue;
+          if (overFat && dFat < 0) continue;
+          // Reward reductions in the exceeded metric(s); scale calories so it
+          // is comparable in magnitude to grams of fat.
+          let gain = 0;
+          if (overFat) gain += Math.max(0, dFat);
+          if (overCal) gain += Math.max(0, dCal) / 15;
+          if (gain <= 0) continue;
+          if (!best || gain > best.gain) best = { day, slot, id: cand.id, gain };
+        }
+      }
+    }
+    if (!best) break; // no further improvement possible
+    p[best.day][best.slot] = best.id;
+    swaps++;
+  }
+
+  const totals = weekTotals(p);
+  return {
+    plan: p,
+    totals,
+    met: {
+      calories: !hasCal || totals.calories <= limits.calories,
+      fat: !hasFat || totals.fat <= limits.fat,
+    },
+    swaps,
+  };
+}
+
 // Macro split as a share of calories (protein/carbs each 4 kcal/g, fat 9).
 function macroSplit(totals) {
   const p = totals.protein * 4;

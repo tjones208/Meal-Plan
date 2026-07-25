@@ -202,6 +202,17 @@ function autoGenerate() {
   readPrefs();
   const { plan, warnings } = generateWeekPlan(prefs);
   state.plan = plan;
+
+  // If weekly limits are set, immediately adjust the fresh plan to fit them.
+  let limitNote = '';
+  if (state.limits.calories || state.limits.fat) {
+    const result = adjustPlanToLimits(state.plan, prefs, state.limits);
+    state.plan = result.plan;
+    limitNote = result.met.calories && result.met.fat
+      ? ' Adjusted to fit your weekly limits.'
+      : ' Adjusted as close to your weekly limits as the recipes allow.';
+  }
+
   saveState(state);
   renderPlanner();
 
@@ -210,7 +221,7 @@ function autoGenerate() {
     note.textContent = `No recipes matched for: ${warnings.map(titleCase).join(', ')}. Try loosening your filters.`;
     note.className = 'note warn';
   } else {
-    note.textContent = 'Fresh weekly plan generated! Review it below or tweak any meal.';
+    note.textContent = 'Fresh weekly plan generated! Review it below or tweak any meal.' + limitNote;
     note.className = 'note ok';
   }
 }
@@ -630,6 +641,8 @@ let nutritionDay = null;
 function renderNutrition() {
   const week = weekNutrition(state.plan);
 
+  renderWeeklyProgress();
+
   // Default the selected day to the first day that has meals.
   if (!nutritionDay || !SLOTS.some((s) => state.plan[nutritionDay][s])) {
     nutritionDay = DAYS.find((d) => SLOTS.some((s) => state.plan[d][s])) || 'Mon';
@@ -756,11 +769,104 @@ function renderNutritionWeek(week) {
   box.appendChild(scroller);
 }
 
+/* ------------------------------------------------------------------ *
+ * Feature 7: Weekly limits + adjust-to-fit
+ * ------------------------------------------------------------------ */
+function initLimits() {
+  const cal = $('#limit-calories');
+  const fat = $('#limit-fat');
+  cal.value = state.limits.calories || '';
+  fat.value = state.limits.fat || '';
+
+  const save = () => {
+    const c = parseInt(cal.value, 10);
+    const f = parseInt(fat.value, 10);
+    state.limits.calories = Number.isFinite(c) && c > 0 ? c : null;
+    state.limits.fat = Number.isFinite(f) && f > 0 ? f : null;
+    saveState(state);
+    renderWeeklyProgress();
+  };
+  cal.addEventListener('input', save);
+  fat.addEventListener('input', save);
+
+  $('#btn-adjust').addEventListener('click', adjustToLimits);
+}
+
+// Weekly totals vs. the set limits, with progress meters.
+function renderWeeklyProgress() {
+  const box = $('#weekly-progress');
+  box.innerHTML = '';
+  const totals = weekTotals(state.plan);
+  const rows = [
+    { key: 'calories', label: 'Calories', unit: 'kcal', limit: state.limits.calories },
+    { key: 'fat', label: 'Fat', unit: 'g', limit: state.limits.fat },
+  ];
+
+  if (!state.limits.calories && !state.limits.fat) {
+    box.appendChild(el('p', { class: 'muted', text: 'No weekly limits set yet. Enter one above to track your week against it.' }));
+    return;
+  }
+
+  for (const r of rows) {
+    if (!r.limit) continue;
+    const value = Math.round(totals[r.key]);
+    const over = value > r.limit;
+    const remaining = r.limit - value;
+    box.appendChild(
+      el('div', { class: 'nutri-row' }, [
+        el('div', { class: 'nutri-top' }, [
+          el('span', { class: 'nutri-label', text: `Weekly ${r.label.toLowerCase()}` }),
+          el('span', { class: 'nutri-val' + (over ? ' over' : ''), text: `${value.toLocaleString()} / ${r.limit.toLocaleString()} ${r.unit}` }),
+        ]),
+        meter(value, r.limit, true),
+        el('div', {
+          class: 'limit-hint' + (over ? ' over' : ''),
+          text: over
+            ? `${Math.abs(remaining).toLocaleString()} ${r.unit} over the limit`
+            : `${remaining.toLocaleString()} ${r.unit} remaining`,
+        }),
+      ])
+    );
+  }
+}
+
+function adjustToLimits() {
+  const note = $('#adjust-note');
+  if (!state.limits.calories && !state.limits.fat) {
+    note.className = 'note warn';
+    note.textContent = 'Set a weekly calorie or fat limit first.';
+    return;
+  }
+  const filled = countFilled();
+  if (filled === 0) {
+    note.className = 'note warn';
+    note.textContent = 'Plan some meals first (use Generate week on the Plan tab), then adjust.';
+    return;
+  }
+
+  readPrefs(); // respect current dietary filters when swapping
+  const result = adjustPlanToLimits(state.plan, prefs, state.limits);
+  state.plan = result.plan;
+  saveState(state);
+  renderPlanner();
+  renderNutrition();
+
+  const parts = [];
+  if (state.limits.calories) parts.push(`${Math.round(result.totals.calories).toLocaleString()} / ${state.limits.calories.toLocaleString()} kcal`);
+  if (state.limits.fat) parts.push(`${Math.round(result.totals.fat).toLocaleString()} / ${state.limits.fat.toLocaleString()} g fat`);
+  const allMet = result.met.calories && result.met.fat;
+  note.className = allMet ? 'note ok' : 'note warn';
+  note.textContent = allMet
+    ? `Adjusted with ${result.swaps} swap${result.swaps === 1 ? '' : 's'} — week now ${parts.join(' · ')}, within your limits.`
+    : `Adjusted with ${result.swaps} swap${result.swaps === 1 ? '' : 's'} to ${parts.join(' · ')}. That is as low as the current recipes and filters allow; loosen a dietary filter or lower the limit target to go further.`;
+}
+
 function init() {
   setCustomRecipes(loadCustomRecipes());
   initTabs();
   initControls();
   initCustomControls();
+  initLimits();
   renderPlanner();
   renderCustomList();
 }

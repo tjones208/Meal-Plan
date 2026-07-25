@@ -83,6 +83,27 @@
 
     <!-- ============ NUTRITION TAB ============ -->
     <section id="nutrition" class="tab-panel">
+      <!-- Weekly limits -->
+      <div class="card">
+        <h2>Weekly limits</h2>
+        <p class="muted">Set a weekly budget for calories and/or fat. The planner can then adjust your meals — swapping in lower-fat and lower-calorie options — to fit under it.</p>
+        <div class="control-row">
+          <div class="control-group">
+            <label class="control-label" for="limit-calories">Weekly calorie limit</label>
+            <input type="number" id="limit-calories" class="num-input" min="0" step="500" placeholder="No limit" />
+          </div>
+          <div class="control-group">
+            <label class="control-label" for="limit-fat">Weekly fat limit (g)</label>
+            <input type="number" id="limit-fat" class="num-input" min="0" step="10" placeholder="No limit" />
+          </div>
+        </div>
+        <div id="weekly-progress" class="weekly-progress"></div>
+        <div class="btn-row">
+          <button id="btn-adjust" class="btn primary">⚖️ Adjust plan to fit limits</button>
+        </div>
+        <p id="adjust-note" class="note"></p>
+      </div>
+
       <div class="card">
         <div class="planner-head">
           <h2>Daily nutrition</h2>
