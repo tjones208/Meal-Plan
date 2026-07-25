@@ -1005,6 +1005,7 @@ function init() {
   renderPlanner();
   renderCustomList();
   renderHiddenList();
+  initSync();
 }
 
 document.addEventListener('DOMContentLoaded', init);

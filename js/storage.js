@@ -91,6 +91,8 @@ function saveState(state) {
   } catch (err) {
     console.warn('Could not save plan.', err);
   }
+  // Mirror the change to a shared plan if cross-device sync is on (js/sync.js).
+  if (typeof syncOnWrite === 'function') syncOnWrite();
 }
 
 /* ------------------------------------------------------------------ *
@@ -116,4 +118,5 @@ function saveCustomRecipes(list) {
   } catch (err) {
     console.warn('Could not save custom recipes.', err);
   }
+  if (typeof syncOnWrite === 'function') syncOnWrite();
 }
