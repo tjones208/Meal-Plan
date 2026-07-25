@@ -10,6 +10,7 @@
 // calorie ceiling.
 function candidatesForSlot(slot, prefs) {
   return getAllRecipes().filter((recipe) => {
+    if (isHidden(recipe.id)) return false;
     if (!recipe.mealTypes.includes(slot)) return false;
     if (prefs.maxCalories && recipe.calories > prefs.maxCalories) return false;
     for (const diet of prefs.diets) {
@@ -17,6 +18,14 @@ function candidatesForSlot(slot, prefs) {
     }
     return true;
   });
+}
+
+// Every meal available for a slot (custom first, then alphabetical), used by
+// the picker so you can browse the full set rather than a small sample.
+function mealsForSlot(slot, prefs) {
+  const c = candidatesForSlot(slot, prefs || { diets: [], maxCalories: 0 });
+  const byName = (a, b) => a.name.localeCompare(b.name);
+  return c.filter((r) => r.custom).sort(byName).concat(c.filter((r) => !r.custom).sort(byName));
 }
 
 // Deterministic-ish shuffle seeded by an index so repeated calls vary without

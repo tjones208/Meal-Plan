@@ -304,18 +304,65 @@ main { padding: 24px 0 60px; }
   margin-top: 12px;
 }
 .picker-card {
-  text-align: left;
+  position: relative;
   background: var(--bg);
   border: 1px solid var(--line);
   border-radius: 10px;
+}
+.picker-card:hover { border-color: var(--brand); }
+.picker-card-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 10px;
   padding: 14px;
+  padding-right: 30px;
   cursor: pointer;
   font: inherit;
   color: inherit;
 }
-.picker-card:hover { border-color: var(--brand); background: #fff8f2; }
+.picker-card-btn:hover { background: #fff8f2; }
 .picker-card-name { font-weight: 700; }
 .picker-card-meta { font-size: 0.82rem; color: var(--muted); margin: 4px 0 8px; }
+.picker-hide {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 0.72rem;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 6px;
+}
+.picker-hide:hover { color: var(--danger); background: #fdeede; }
+
+/* Picker controls (search + count) */
+.picker-controls { display: flex; align-items: center; gap: 12px; margin: 8px 0 4px; }
+.picker-controls .text-input { flex: 1; }
+.picker-count { color: var(--muted); font-size: 0.85rem; white-space: nowrap; }
+
+/* Fat % target */
+.fat-pct-row { display: flex; align-items: center; gap: 8px; }
+.fat-pct-status {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  margin-bottom: 18px;
+  font-size: 0.9rem;
+  background: var(--accent-light);
+  color: var(--accent);
+}
+.fat-pct-status.over { background: #fdeede; color: var(--danger); }
+.fat-pct-big { font-size: 1.4rem; font-weight: 700; }
+.day-meal-fat { margin-left: auto; font-size: 0.82rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.day-meal-fat.over { color: var(--danger); }
+.day-meal-fat + .day-meal-cal { margin-left: 12px; }
 
 /* Custom meals */
 .custom-list { margin-top: 8px; }

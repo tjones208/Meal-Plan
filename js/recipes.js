@@ -10424,6 +10424,18 @@ function setCustomRecipes(list) {
   CUSTOM_RECIPES = Array.isArray(list) ? list : [];
 }
 
+// Recipe ids the user has removed. Excluded from suggestions and generated
+// plans, but still resolvable by getRecipeById so existing references render.
+let HIDDEN_IDS = [];
+
+function setHiddenIds(list) {
+  HIDDEN_IDS = Array.isArray(list) ? list : [];
+}
+
+function isHidden(id) {
+  return HIDDEN_IDS.indexOf(id) !== -1;
+}
+
 // The full recipe set the app works with: built-ins first, then custom meals.
 function getAllRecipes() {
   return RECIPES.concat(CUSTOM_RECIPES);
