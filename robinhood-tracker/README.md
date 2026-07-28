@@ -1,6 +1,6 @@
 # Robinhood Returns Tracker
 
-A private dashboard for analyzing Robinhood transaction history — returns, capital
+A dashboard for analyzing Robinhood transaction history — returns, capital
 contributions & distributions, per-stock performance, and what's actually driving
 performance (options premium, dividends, interest, and realized stock gains).
 
@@ -39,9 +39,8 @@ Overview page — total return is then `current value − net contributions`.
 
 ## Architecture
 
-- Transactions live in Supabase Postgres (`public.rh_transactions`) with **row-level
-  security** so only the signed-in user can read their own rows.
-- Auth is Supabase email/password; the anon key is public by design (RLS enforces access).
+- Transactions live in Supabase Postgres (`public.rh_transactions`), read with the public
+  anon key. There is no login — the dashboard is open to anyone with the URL.
 - All analytics are computed client-side from the transaction set in `lib/analytics.ts`
   (pure, unit-checkable functions).
 

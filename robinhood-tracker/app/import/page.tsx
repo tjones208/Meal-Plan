@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useData } from "@/components/DataProvider";
 import { PageHeader, Card, Loading, ErrorCard, COLORS } from "@/components/ui";
 import { supabase } from "@/lib/supabase";
+import { OWNER_ID } from "@/lib/config";
 import { parseRobinhoodCsv, type ParsedTxn } from "@/lib/csv";
 import { num } from "@/lib/format";
 
@@ -12,7 +13,7 @@ type Status = { kind: "idle" | "working" | "done" | "error"; message: string; in
 const BUNDLED = "/robinhood_export.csv";
 
 export default function ImportPage() {
-  const { session, txns, loading, error, reload } = useData();
+  const { txns, loading, error, reload } = useData();
   const [status, setStatus] = useState<Status>({ kind: "idle", message: "" });
   const [bundledAvailable, setBundledAvailable] = useState<boolean | null>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -21,13 +22,12 @@ export default function ImportPage() {
 
   const runImport = useCallback(
     async (rows: ParsedTxn[], filename: string) => {
-      if (!session?.user) return;
       if (!rows.length) {
         setStatus({ kind: "error", message: "No transactions found in that file." });
         return;
       }
       setStatus({ kind: "working", message: `Importing ${num(rows.length)} transactions…`, total: rows.length });
-      const userId = session.user.id;
+      const userId = OWNER_ID;
       const withUser = rows.map((r) => ({ ...r, user_id: userId }));
       const BATCH = 500;
       let inserted = 0;
@@ -48,7 +48,7 @@ export default function ImportPage() {
         setStatus({ kind: "error", message: e instanceof Error ? e.message : "Import failed." });
       }
     },
-    [session, reload]
+    [reload]
   );
 
   const importBundled = useCallback(
@@ -90,18 +90,17 @@ export default function ImportPage() {
     };
   }, []);
 
-  // Auto-seed on first login when the account has no data yet and a dataset is bundled.
+  // Auto-seed on first visit when there is no data yet and a dataset is bundled.
   useEffect(() => {
     if (autoTried.current) return;
     if (loading || error) return;
-    if (!session?.user) return;
     if (txns.length > 0) return;
     if (bundledAvailable !== true) return;
     if (localStorage.getItem("rh_seed_attempted") === "1") return;
     autoTried.current = true;
     localStorage.setItem("rh_seed_attempted", "1");
     importBundled(true);
-  }, [session, txns, loading, error, bundledAvailable, importBundled]);
+  }, [txns, loading, error, bundledAvailable, importBundled]);
 
   async function onFile(file: File) {
     const text = await file.text();
@@ -110,10 +109,9 @@ export default function ImportPage() {
   }
 
   async function clearAll() {
-    if (!session?.user) return;
-    if (!confirm("Delete ALL imported transactions for your account? This cannot be undone.")) return;
+    if (!confirm("Delete ALL imported transactions? This cannot be undone.")) return;
     setStatus({ kind: "working", message: "Deleting…" });
-    const { error: err } = await supabase.from("rh_transactions").delete().eq("user_id", session.user.id);
+    const { error: err } = await supabase.from("rh_transactions").delete().eq("user_id", OWNER_ID);
     if (err) setStatus({ kind: "error", message: err.message });
     else {
       localStorage.removeItem("rh_seed_attempted");
@@ -217,7 +215,7 @@ export default function ImportPage() {
       <Card style={{ marginTop: 16 }} title="How it works">
         <ul className="muted" style={{ fontSize: 13, lineHeight: 1.7, margin: 0, paddingLeft: 18 }}>
           <li>Each row is fingerprinted so re-importing the same or an overlapping export never creates duplicates.</li>
-          <li>Data is stored privately in Supabase and protected by row-level security — only your login can read it.</li>
+          <li>Data is stored in Supabase and read back instantly — no login required to view this dashboard.</li>
           <li>All analytics recalculate instantly from the transactions on every page.</li>
         </ul>
       </Card>
