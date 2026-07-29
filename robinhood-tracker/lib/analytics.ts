@@ -81,6 +81,26 @@ const A = (t: Txn) => t.amount ?? 0;
 const Q = (t: Txn) => t.quantity ?? 0;
 export const ym = (iso: string | null) => (iso ? iso.slice(0, 7) : "unknown");
 
+// ---------------------------------------------------------------------------
+// Date-range filtering
+// ---------------------------------------------------------------------------
+export type DateRange = { start: string | null; end: string | null }; // inclusive ISO dates
+export const ALL_TIME: DateRange = { start: null, end: null };
+
+export function inRange(iso: string | null, r: DateRange): boolean {
+  if (!r.start && !r.end) return true;
+  if (!iso) return false;
+  if (r.start && iso < r.start) return false;
+  if (r.end && iso > r.end) return false;
+  return true;
+}
+
+function upTo(iso: string | null, end: string | null): boolean {
+  if (!end) return true;
+  if (!iso) return false;
+  return iso <= end;
+}
+
 // Robinhood exports carry only a date (no intraday time), so same-day rows can
 // arrive in any order. FIFO cost-basis matching requires acquisitions to precede
 // disposals, otherwise a same-day "sell before buy" matches against too few lots
@@ -205,7 +225,7 @@ export type Summary = {
   txnCount: number;
 };
 
-export function summarize(txns: Txn[]): Summary {
+export function summarize(all: Txn[], range: DateRange = ALL_TIME): Summary {
   let optionsNet = 0,
     optionPremiumCollected = 0,
     optionPremiumPaid = 0,
@@ -216,6 +236,7 @@ export function summarize(txns: Txn[]): Summary {
     deposits = 0,
     withdrawals = 0;
 
+  const txns = all.filter((t) => inRange(t.activity_date, range));
   for (const t of txns) {
     const code = t.trans_code || "";
     const amt = A(t);
@@ -255,9 +276,13 @@ export function summarize(txns: Txn[]): Summary {
     }
   }
 
-  const realizedStock = realizedStock_total(txns);
+  // Realized stock P&L uses FIFO over the FULL history (cost basis can predate
+  // the window); each sale is then attributed to its own date and filtered.
+  const realizedStockTotal = realizedStock(all)
+    .events.filter((e) => inRange(e.date, range))
+    .reduce((s, e) => s + e.gain, 0);
   const dividendsNet = dividendsGross + dividendTax;
-  const totalRealizedReturn = optionsNet + dividendsGross + dividendTax + interest + fees + realizedStock;
+  const totalRealizedReturn = optionsNet + dividendsGross + dividendTax + interest + fees + realizedStockTotal;
   const netContributions = deposits + withdrawals;
 
   const dates = txns.map((t) => t.activity_date).filter(Boolean) as string[];
@@ -272,7 +297,7 @@ export function summarize(txns: Txn[]): Summary {
     dividendsNet,
     interest,
     fees,
-    realizedStock,
+    realizedStock: realizedStockTotal,
     totalRealizedReturn,
     deposits,
     withdrawals,
@@ -282,10 +307,6 @@ export function summarize(txns: Txn[]): Summary {
     lastDate: dates[dates.length - 1] ?? null,
     txnCount: txns.length,
   };
-}
-
-function realizedStock_total(txns: Txn[]): number {
-  return realizedStock(txns).total;
 }
 
 // ---------------------------------------------------------------------------
@@ -316,7 +337,7 @@ export type MonthlyRow = {
   total: number;
 };
 
-export function monthlyIncome(txns: Txn[]): MonthlyRow[] {
+export function monthlyIncome(all: Txn[], range: DateRange = ALL_TIME): MonthlyRow[] {
   const map = new Map<string, MonthlyRow>();
   const get = (m: string) => {
     let r = map.get(m);
@@ -327,7 +348,8 @@ export function monthlyIncome(txns: Txn[]): MonthlyRow[] {
     return r;
   };
 
-  for (const t of txns) {
+  for (const t of all) {
+    if (!inRange(t.activity_date, range)) continue;
     const code = t.trans_code || "";
     const m = ym(t.activity_date);
     const amt = A(t);
@@ -339,8 +361,9 @@ export function monthlyIncome(txns: Txn[]): MonthlyRow[] {
     else if (cat === "fee") get(m).fees += amt;
   }
 
-  // realized stock attributed to the month of each sale
-  for (const e of realizedStock(txns).events) {
+  // realized stock attributed to the month of each sale (FIFO over full history)
+  for (const e of realizedStock(all).events) {
+    if (!inRange(e.date, range)) continue;
     get(e.month).stock += e.gain;
   }
 
@@ -371,8 +394,7 @@ export type InstrumentRow = {
   txns: number;
 };
 
-export function perInstrument(txns: Txn[]): InstrumentRow[] {
-  const realized = realizedStock(txns).byInstrument;
+export function perInstrument(all: Txn[], range: DateRange = ALL_TIME): InstrumentRow[] {
   const map = new Map<string, InstrumentRow>();
   const get = (i: string) => {
     let r = map.get(i);
@@ -383,22 +405,29 @@ export function perInstrument(txns: Txn[]): InstrumentRow[] {
     return r;
   };
 
-  for (const t of txns) {
+  for (const t of all) {
     const inst = (t.instrument || "").trim();
     if (!inst) continue;
     const code = t.trans_code || "";
     const amt = A(t);
+    // Open shares reflect the position as of the end of the window (cumulative
+    // through range.end), so trades before the window still count toward it.
+    if (upTo(t.activity_date, range.end)) {
+      if (code === "Buy") get(inst).openShares += Q(t);
+      else if (code === "Sell") get(inst).openShares -= Q(t);
+    }
+    if (!inRange(t.activity_date, range)) continue;
     const r = get(inst);
     r.txns++;
     const cat = categoryOf(code);
     if (cat === "option") r.optionsNet += amt;
     else if (cat === "dividend") r.dividends += amt;
-    if (code === "Buy") r.openShares += Q(t);
-    else if (code === "Sell") r.openShares -= Q(t);
   }
 
-  for (const [inst, gain] of Object.entries(realized)) {
-    get(inst).realizedStock += gain;
+  // realized stock per instrument: FIFO over full history, sales filtered to range
+  for (const e of realizedStock(all).events) {
+    if (!inRange(e.date, range)) continue;
+    get(e.instrument).realizedStock += e.gain;
   }
 
   const rows = [...map.values()];
@@ -438,7 +467,8 @@ export type OptionsAnalytics = {
   monthly: Array<{ month: string; net: number }>;
 };
 
-export function optionsAnalytics(txns: Txn[]): OptionsAnalytics {
+export function optionsAnalytics(all: Txn[], range: DateRange = ALL_TIME): OptionsAnalytics {
+  const txns = all.filter((t) => inRange(t.activity_date, range));
   let premiumCollected = 0,
     premiumPaid = 0,
     contractsSTO = 0,
@@ -535,15 +565,19 @@ export function optionsAnalytics(txns: Txn[]): OptionsAnalytics {
 // Capital flows (contributions & distributions)
 // ---------------------------------------------------------------------------
 export type CashFlowRow = { date: string | null; month: string; amount: number };
-export function capitalFlows(txns: Txn[]): {
+export function capitalFlows(
+  all: Txn[],
+  range: DateRange = ALL_TIME
+): {
   events: CashFlowRow[];
   monthly: Array<{ month: string; deposits: number; withdrawals: number; net: number }>;
   cumulative: Array<{ month: string; netInvested: number }>;
 } {
   const events: CashFlowRow[] = [];
   const monthMap = new Map<string, { deposits: number; withdrawals: number }>();
-  for (const t of txns) {
+  for (const t of all) {
     if (t.trans_code !== "ACH") continue;
+    if (!inRange(t.activity_date, range)) continue;
     const amt = A(t);
     events.push({ date: t.activity_date, month: ym(t.activity_date), amount: amt });
     const m = ym(t.activity_date);
@@ -563,4 +597,147 @@ export function capitalFlows(txns: Txn[]): {
   });
   events.sort((a, b) => ((a.date ?? "") < (b.date ?? "") ? 1 : -1));
   return { events, monthly, cumulative };
+}
+
+// ---------------------------------------------------------------------------
+// Profit & Loss statement (for a period)
+// ---------------------------------------------------------------------------
+export type PLStatement = {
+  stockGains: number;
+  stockLosses: number;
+  stockNet: number;
+  callOptions: number;
+  putOptions: number;
+  otherOptions: number;
+  optionsNet: number;
+  dividendIncome: number;
+  dividendTax: number;
+  dividendNet: number;
+  interestIncome: number;
+  marginInterest: number;
+  otherFees: number;
+  feesTotal: number;
+  netIncome: number;
+  // option contract outcomes within the period
+  contractsWon: number; // expired worthless (premium kept)
+  contractsLost: number; // bought back to close
+  contractsAssigned: number;
+  winRate: number | null;
+};
+
+export function plStatement(all: Txn[], range: DateRange = ALL_TIME): PLStatement {
+  let stockGains = 0,
+    stockLosses = 0,
+    callOptions = 0,
+    putOptions = 0,
+    otherOptions = 0,
+    dividendIncome = 0,
+    dividendTax = 0,
+    interestIncome = 0,
+    marginInterest = 0,
+    otherFees = 0,
+    contractsWon = 0,
+    contractsLost = 0,
+    contractsAssigned = 0;
+
+  // Realized stock split into gains vs losses (FIFO over full history)
+  for (const e of realizedStock(all).events) {
+    if (!inRange(e.date, range)) continue;
+    if (e.gain >= 0) stockGains += e.gain;
+    else stockLosses += e.gain;
+  }
+
+  for (const t of all) {
+    if (!inRange(t.activity_date, range)) continue;
+    const code = t.trans_code || "";
+    const amt = A(t);
+    const qty = Q(t);
+    if (code === "STO" || code === "STC" || code === "BTC" || code === "BTO") {
+      const ot = optionType(t.description);
+      if (ot === "call") callOptions += amt;
+      else if (ot === "put") putOptions += amt;
+      else otherOptions += amt;
+    }
+    if (code === "OEXP") contractsWon += qty;
+    else if (code === "BTC") contractsLost += qty;
+    else if (code === "OASGN") contractsAssigned += qty;
+    else if (code === "CDIV" || code === "MDIV") dividendIncome += amt;
+    else if (code === "DTAX") dividendTax += amt;
+    else if (code === "INT") interestIncome += amt;
+    else if (code === "MINT") marginInterest += amt;
+    else if (code === "GOLD" || code === "DFEE" || code === "AFEE" || code === "GMPC" || code === "FUTSWP")
+      otherFees += amt;
+  }
+
+  const stockNet = stockGains + stockLosses;
+  const optionsNet = callOptions + putOptions + otherOptions;
+  const dividendNet = dividendIncome + dividendTax;
+  const feesTotal = marginInterest + otherFees;
+  const netIncome = stockNet + optionsNet + dividendNet + interestIncome + feesTotal;
+  const outcomes = contractsWon + contractsLost + contractsAssigned;
+
+  return {
+    stockGains,
+    stockLosses,
+    stockNet,
+    callOptions,
+    putOptions,
+    otherOptions,
+    optionsNet,
+    dividendIncome,
+    dividendTax,
+    dividendNet,
+    interestIncome,
+    marginInterest,
+    otherFees,
+    feesTotal,
+    netIncome,
+    contractsWon,
+    contractsLost,
+    contractsAssigned,
+    winRate: outcomes > 0 ? contractsWon / outcomes : null,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Balance sheet (as of a date)
+// ---------------------------------------------------------------------------
+export type BalanceSheet = {
+  asOf: string | null;
+  marketValue: number; // user-supplied portfolio value
+  marginBalance: number; // user-supplied liabilities
+  totalAssets: number;
+  totalLiabilities: number;
+  contributedCapital: number; // net deposits to date
+  realizedEarnings: number; // cumulative realized P&L to date
+  bookEquity: number; // contributed + realized
+  unrealized: number; // plug: (assets - liabilities) - book equity
+  totalEquity: number; // assets - liabilities
+};
+
+export function balanceSheet(
+  all: Txn[],
+  asOf: string | null,
+  marketValue: number,
+  marginBalance: number
+): BalanceSheet {
+  const toDate: DateRange = { start: null, end: asOf };
+  const s = summarize(all, toDate);
+  const contributedCapital = s.netContributions;
+  const realizedEarnings = s.totalRealizedReturn;
+  const bookEquity = contributedCapital + realizedEarnings;
+  const totalEquity = marketValue - marginBalance;
+  const unrealized = totalEquity - bookEquity;
+  return {
+    asOf,
+    marketValue,
+    marginBalance,
+    totalAssets: marketValue,
+    totalLiabilities: marginBalance,
+    contributedCapital,
+    realizedEarnings,
+    bookEquity,
+    unrealized,
+    totalEquity,
+  };
 }

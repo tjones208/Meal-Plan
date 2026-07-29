@@ -14,7 +14,7 @@ import {
 import { usd, pct, shortDate } from "@/lib/format";
 
 export default function OverviewPage() {
-  const { txns, loading, error } = useData();
+  const { txns, loading, error, range } = useData();
   const [marketValue, setMarketValue] = useState<string>("");
 
   useEffect(() => {
@@ -22,10 +22,10 @@ export default function OverviewPage() {
     if (v) setMarketValue(v);
   }, []);
 
-  const s = useMemo(() => summarize(txns), [txns]);
-  const monthly = useMemo(() => monthlyIncome(txns), [txns]);
+  const s = useMemo(() => summarize(txns, range), [txns, range]);
+  const monthly = useMemo(() => monthlyIncome(txns, range), [txns, range]);
   const cum = useMemo(() => cumulative(monthly), [monthly]);
-  const instruments = useMemo(() => perInstrument(txns), [txns]);
+  const instruments = useMemo(() => perInstrument(txns, range), [txns, range]);
 
   if (error) return <ErrorCard message={error} />;
   if (loading && !txns.length) return <Loading />;

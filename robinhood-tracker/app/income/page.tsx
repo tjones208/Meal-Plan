@@ -8,9 +8,9 @@ import { summarize, monthlyIncome, incomeSources } from "@/lib/analytics";
 import { usd, pct } from "@/lib/format";
 
 export default function IncomePage() {
-  const { txns, loading, error } = useData();
-  const s = useMemo(() => summarize(txns), [txns]);
-  const monthly = useMemo(() => monthlyIncome(txns), [txns]);
+  const { txns, loading, error, range } = useData();
+  const s = useMemo(() => summarize(txns, range), [txns, range]);
+  const monthly = useMemo(() => monthlyIncome(txns, range), [txns, range]);
 
   if (error) return <ErrorCard message={error} />;
   if (loading && !txns.length) return <Loading />;

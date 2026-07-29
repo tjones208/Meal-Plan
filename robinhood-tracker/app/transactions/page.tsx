@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useData } from "@/components/DataProvider";
 import { PageHeader, Card, Loading, ErrorCard, NeedImport, Money, COLORS } from "@/components/ui";
-import { categoryOf, CODE_LABEL, type Category } from "@/lib/analytics";
+import { categoryOf, CODE_LABEL, inRange, type Category } from "@/lib/analytics";
 import { shortDate, num } from "@/lib/format";
 
 const CATEGORIES: Array<{ key: Category | "all"; label: string }> = [
@@ -30,14 +30,17 @@ const CAT_COLOR: Record<string, string> = {
 const PAGE = 50;
 
 export default function TransactionsPage() {
-  const { txns, loading, error } = useData();
+  const { txns, loading, error, range } = useData();
   const [cat, setCat] = useState<Category | "all">("all");
   const [q, setQ] = useState("");
   const [page, setPage] = useState(0);
 
   const sorted = useMemo(
-    () => [...txns].sort((a, b) => ((a.activity_date ?? "") < (b.activity_date ?? "") ? 1 : -1)),
-    [txns]
+    () =>
+      [...txns]
+        .filter((t) => inRange(t.activity_date, range))
+        .sort((a, b) => ((a.activity_date ?? "") < (b.activity_date ?? "") ? 1 : -1)),
+    [txns, range]
   );
 
   const filtered = useMemo(() => {

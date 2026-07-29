@@ -3,13 +3,16 @@
 import React, { createContext, useContext, useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { OWNER_ID } from "@/lib/config";
-import type { Txn } from "@/lib/analytics";
+import type { Txn, DateRange } from "@/lib/analytics";
+import { ALL_TIME } from "@/lib/analytics";
 
 type DataState = {
   txns: Txn[];
   loading: boolean;
   error: string | null;
   reload: () => Promise<void>;
+  range: DateRange;
+  setRange: (r: DateRange) => void;
 };
 
 const Ctx = createContext<DataState | null>(null);
@@ -42,6 +45,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [txns, setTxns] = useState<Txn[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [range, setRange] = useState<DateRange>(ALL_TIME);
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -61,8 +65,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, [reload]);
 
   const value = useMemo<DataState>(
-    () => ({ txns, loading, error, reload }),
-    [txns, loading, error, reload]
+    () => ({ txns, loading, error, reload, range, setRange }),
+    [txns, loading, error, reload, range]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

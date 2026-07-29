@@ -18,8 +18,8 @@ import {
 } from "recharts";
 
 export default function OptionsPage() {
-  const { txns, loading, error } = useData();
-  const o = useMemo(() => optionsAnalytics(txns), [txns]);
+  const { txns, loading, error, range } = useData();
+  const o = useMemo(() => optionsAnalytics(txns, range), [txns, range]);
 
   if (error) return <ErrorCard message={error} />;
   if (loading && !txns.length) return <Loading />;

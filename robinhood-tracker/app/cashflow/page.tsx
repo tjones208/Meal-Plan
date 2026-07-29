@@ -8,9 +8,9 @@ import { capitalFlows, summarize } from "@/lib/analytics";
 import { usd, shortDate, num } from "@/lib/format";
 
 export default function CashFlowPage() {
-  const { txns, loading, error } = useData();
-  const s = useMemo(() => summarize(txns), [txns]);
-  const cf = useMemo(() => capitalFlows(txns), [txns]);
+  const { txns, loading, error, range } = useData();
+  const s = useMemo(() => summarize(txns, range), [txns, range]);
+  const cf = useMemo(() => capitalFlows(txns, range), [txns, range]);
 
   if (error) return <ErrorCard message={error} />;
   if (loading && !txns.length) return <Loading />;

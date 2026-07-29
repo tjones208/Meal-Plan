@@ -1,11 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { DataProvider } from "./DataProvider";
+import { DateRangePicker } from "./DateRangePicker";
 
 const NAV = [
   { href: "/", label: "Overview", icon: "◎" },
+  { href: "/pnl", label: "P&L Statement", icon: "▦" },
+  { href: "/balance", label: "Balance Sheet", icon: "⚖" },
   { href: "/income", label: "Income Sources", icon: "⛁" },
   { href: "/stocks", label: "Stocks", icon: "▤" },
   { href: "/options", label: "Options", icon: "⤢" },
@@ -14,24 +18,10 @@ const NAV = [
   { href: "/import", label: "Import Data", icon: "↥" },
 ];
 
-function Sidebar() {
+function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const pathname = usePathname();
   return (
-    <aside
-      style={{
-        width: 236,
-        flexShrink: 0,
-        borderRight: "1px solid var(--border)",
-        padding: "20px 14px",
-        display: "flex",
-        flexDirection: "column",
-        gap: 4,
-        position: "sticky",
-        top: 0,
-        height: "100vh",
-      }}
-      className="rh-sidebar"
-    >
+    <aside className={`rh-sidebar ${open ? "open" : ""}`}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 8px 18px" }}>
         <div
           style={{
@@ -53,7 +43,7 @@ function Sidebar() {
       {NAV.map((n) => {
         const active = n.href === "/" ? pathname === "/" : pathname.startsWith(n.href);
         return (
-          <Link key={n.href} href={n.href} className={`nav-link ${active ? "active" : ""}`}>
+          <Link key={n.href} href={n.href} className={`nav-link ${active ? "active" : ""}`} onClick={onClose}>
             <span className="nav-dot" />
             <span style={{ width: 18, textAlign: "center", opacity: 0.85 }}>{n.icon}</span>
             <span>{n.label}</span>
@@ -64,14 +54,33 @@ function Sidebar() {
   );
 }
 
+function Topbar({ onMenu }: { onMenu: () => void }) {
+  return (
+    <header className="rh-topbar">
+      <button className="rh-hamburger" aria-label="Open menu" onClick={onMenu}>
+        <span />
+        <span />
+        <span />
+      </button>
+      <div className="rh-topbar-title">Returns Tracker</div>
+      <div style={{ marginLeft: "auto" }}>
+        <DateRangePicker />
+      </div>
+    </header>
+  );
+}
+
 export function Shell({ children }: { children: React.ReactNode }) {
+  const [menuOpen, setMenuOpen] = useState(false);
   return (
     <DataProvider>
-      <div className="rh-shell" style={{ display: "flex", minHeight: "100vh" }}>
-        <Sidebar />
-        <main className="rh-main" style={{ flex: 1, minWidth: 0, padding: "28px clamp(16px, 3vw, 40px)", maxWidth: 1280 }}>
-          {children}
-        </main>
+      <div className="rh-shell">
+        <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
+        {menuOpen && <div className="rh-overlay" onClick={() => setMenuOpen(false)} />}
+        <div className="rh-main-wrap">
+          <Topbar onMenu={() => setMenuOpen(true)} />
+          <main className="rh-main">{children}</main>
+        </div>
       </div>
     </DataProvider>
   );

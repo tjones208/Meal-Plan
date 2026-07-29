@@ -10,9 +10,9 @@ import { num, usd } from "@/lib/format";
 type SortKey = "instrument" | "optionsNet" | "realizedStock" | "dividends" | "total" | "openShares" | "txns";
 
 export default function StocksPage() {
-  const { txns, loading, error } = useData();
-  const rows = useMemo(() => perInstrument(txns), [txns]);
-  const s = useMemo(() => summarize(txns), [txns]);
+  const { txns, loading, error, range } = useData();
+  const rows = useMemo(() => perInstrument(txns, range), [txns, range]);
+  const s = useMemo(() => summarize(txns, range), [txns, range]);
   const [sort, setSort] = useState<SortKey>("total");
   const [dir, setDir] = useState<"asc" | "desc">("desc");
   const [q, setQ] = useState("");
