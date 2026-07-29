@@ -81,12 +81,23 @@ const A = (t: Txn) => t.amount ?? 0;
 const Q = (t: Txn) => t.quantity ?? 0;
 export const ym = (iso: string | null) => (iso ? iso.slice(0, 7) : "unknown");
 
+// Robinhood exports carry only a date (no intraday time), so same-day rows can
+// arrive in any order. FIFO cost-basis matching requires acquisitions to precede
+// disposals, otherwise a same-day "sell before buy" matches against too few lots
+// and books a bogus zero-cost-basis gain. Within a date we therefore order buys
+// before sells (LCAP and non-trade rows fall in the middle; they don't affect FIFO).
+function tradeRank(code: string | null): number {
+  return code === "Buy" ? 0 : code === "Sell" ? 2 : 1;
+}
+
 function sortByDate(txns: Txn[]): Txn[] {
   return [...txns].sort((a, b) => {
     const da = a.activity_date ?? "";
     const db = b.activity_date ?? "";
     if (da < db) return -1;
     if (da > db) return 1;
+    const r = tradeRank(a.trans_code) - tradeRank(b.trans_code);
+    if (r !== 0) return r;
     return (a.id ?? "").localeCompare(b.id ?? "");
   });
 }
