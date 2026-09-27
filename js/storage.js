@@ -93,6 +93,8 @@ function saveState(state) {
   }
   // Mirror the change to a shared plan if cross-device sync is on (js/sync.js).
   if (typeof syncOnWrite === 'function') syncOnWrite();
+  // Targets depend on the fat-% setting, so refresh the database copy too.
+  if (typeof scheduleMirror === 'function') scheduleMirror();
 }
 
 /* ------------------------------------------------------------------ *

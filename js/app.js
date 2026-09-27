@@ -1023,6 +1023,7 @@ function init() {
   renderHiddenList();
   initTracker();
   initSync();
+  initMirror();
 }
 
 document.addEventListener('DOMContentLoaded', init);

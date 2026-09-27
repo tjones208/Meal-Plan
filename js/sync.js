@@ -246,6 +246,7 @@ async function startSync(code, adopt) {
     await pushNow();
   }
   startPolling();
+  if (typeof scheduleMirror === 'function') scheduleMirror(); // database rows move to the shared household
 }
 
 function stopSync() {
@@ -253,6 +254,7 @@ function stopSync() {
   localStorage.removeItem(SHARE_CODE_KEY);
   stopPolling();
   renderSyncCard();
+  if (typeof scheduleMirror === 'function') scheduleMirror();
 }
 
 /* ---- UI ---- */
