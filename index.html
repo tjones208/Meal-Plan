@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Meal Plan — weekly planner, suggestions & shopping lists</title>
+  <title>Meal Plan — AI nutrition tracker, meal planner & coach</title>
 
   <!-- Progressive Web App: installable, standalone, mobile-friendly -->
   <meta name="theme-color" content="#e07a3f" />
@@ -21,21 +21,145 @@
   <header class="app-header">
     <div class="wrap">
       <h1>🍽️ Meal&nbsp;Plan</h1>
-      <p class="tagline">Plan your week, get suggestions, build a shopping list, and cook with step-by-step instructions.</p>
+      <p class="tagline">Snap a photo of any meal for instant nutrition facts, hit your goals with an AI coach, and plan your week.</p>
     </div>
   </header>
 
   <nav class="tabs">
     <div class="wrap">
-      <button class="tab-btn active" data-tab="plan">📅 Plan</button>
-      <button class="tab-btn" data-tab="nutrition">📊 Nutrition</button>
-      <button class="tab-btn" data-tab="shopping">🛒 Shopping List</button>
+      <button class="tab-btn active" data-tab="today"><span class="tab-ico">📸</span><span class="tab-lbl">Today</span></button>
+      <button class="tab-btn" data-tab="coach"><span class="tab-ico">💬</span><span class="tab-lbl">Coach</span></button>
+      <button class="tab-btn" data-tab="progress"><span class="tab-ico">📈</span><span class="tab-lbl">Progress</span></button>
+      <button class="tab-btn" data-tab="plan"><span class="tab-ico">📅</span><span class="tab-lbl">Plan</span></button>
+      <button class="tab-btn" data-tab="nutrition"><span class="tab-ico">📊</span><span class="tab-lbl">Weekly</span></button>
+      <button class="tab-btn" data-tab="shopping"><span class="tab-ico">🛒</span><span class="tab-lbl">Shop</span></button>
     </div>
   </nav>
 
   <main class="wrap">
+    <!-- ============ TODAY TAB (food log) ============ -->
+    <section id="today" class="tab-panel active">
+      <div class="today-top">
+        <div id="person-switch" class="person-switch"></div>
+        <button id="btn-profile" class="btn ghost small" type="button">⚙️ Profile &amp; goals</button>
+      </div>
+
+      <div id="setup-card"></div>
+
+      <div class="card summary-card">
+        <div class="date-nav">
+          <button id="day-prev" class="icon-btn" type="button" aria-label="Previous day">‹</button>
+          <h2 id="day-label">Today</h2>
+          <button id="day-next" class="icon-btn" type="button" aria-label="Next day">›</button>
+        </div>
+        <div id="day-summary" class="day-summary"></div>
+      </div>
+
+      <div class="card">
+        <h2>Log food</h2>
+        <p class="muted">Snap a photo and AI works out calories, macros and micronutrients. You can edit everything before saving.</p>
+        <div class="log-actions">
+          <label class="log-btn primary">
+            <input type="file" id="photo-camera" accept="image/*" capture="environment" hidden />
+            <span class="log-ico">📸</span><span>Snap meal</span>
+          </label>
+          <label class="log-btn">
+            <input type="file" id="photo-library" accept="image/*" hidden />
+            <span class="log-ico">🖼️</span><span>From photos</span>
+          </label>
+          <button class="log-btn" id="btn-describe" type="button"><span class="log-ico">✍️</span><span>Describe it</span></button>
+          <button class="log-btn" id="btn-barcode" type="button"><span class="log-ico">🔍</span><span>Barcode</span></button>
+          <button class="log-btn" id="btn-from-recipe" type="button"><span class="log-ico">📖</span><span>My recipes</span></button>
+          <button class="log-btn" id="btn-manual" type="button"><span class="log-ico">✏️</span><span>Manual</span></button>
+        </div>
+      </div>
+
+      <div id="planned-today"></div>
+
+      <div id="meal-log"></div>
+
+      <div class="card">
+        <details id="full-panel">
+          <summary><h2 class="inline-h2">Full nutrition panel</h2></summary>
+          <p class="muted">Micronutrients are compared with FDA Daily Values; macros use your personal targets.</p>
+          <div id="panel-rows" class="nutri-rows"></div>
+        </details>
+      </div>
+    </section>
+
+    <!-- ============ COACH TAB ============ -->
+    <section id="coach" class="tab-panel">
+      <div class="card coach-card">
+        <div class="planner-head">
+          <h2>Your nutrition coach</h2>
+          <button id="btn-coach-clear" class="btn ghost small" type="button">New chat</button>
+        </div>
+        <p class="muted">Ask anything. The coach sees your goals, today's log, recent days and your recipe library. General guidance, not medical advice.</p>
+        <div id="coach-thread" class="coach-thread" aria-live="polite"></div>
+        <div id="coach-chips" class="coach-chips"></div>
+        <form id="coach-form" class="coach-form" autocomplete="off">
+          <textarea id="coach-input" class="area-input" rows="2" placeholder="e.g. What should I have for dinner to hit my protein?"></textarea>
+          <button type="submit" id="coach-send" class="btn primary">Send</button>
+        </form>
+      </div>
+      <div class="card">
+        <details>
+          <summary><strong>AI settings</strong></summary>
+          <p class="muted">If you set an <code>APP_PASSCODE</code> secret on the server, enter the same passcode here so this device can use the free AI features.</p>
+          <div class="join-row">
+            <input type="password" id="ai-passcode" class="text-input" placeholder="App passcode (optional)" autocomplete="off" />
+            <button id="btn-save-passcode" class="btn ghost" type="button">Save</button>
+          </div>
+          <p id="passcode-note" class="note ok"></p>
+        </details>
+      </div>
+    </section>
+
+    <!-- ============ PROGRESS TAB ============ -->
+    <section id="progress" class="tab-panel">
+      <div class="card">
+        <div class="planner-head">
+          <h2>Progress</h2>
+          <div id="range-switch" class="seg">
+            <button type="button" data-range="7" class="active">7 days</button>
+            <button type="button" data-range="30">30 days</button>
+            <button type="button" data-range="90">90 days</button>
+          </div>
+        </div>
+        <div id="progress-stats" class="stat-tiles"></div>
+      </div>
+      <div class="card">
+        <h2>Calories vs target</h2>
+        <div id="chart-calories" class="chart"></div>
+      </div>
+      <div class="card">
+        <h2>Average macros vs targets</h2>
+        <div id="progress-macros" class="nutri-rows"></div>
+      </div>
+      <div class="card">
+        <div class="planner-head">
+          <h2>Weight</h2>
+          <div class="planner-stats"><span id="weight-change"></span></div>
+        </div>
+        <form id="weight-form" class="join-row" autocomplete="off">
+          <input type="number" id="weight-input" class="text-input" step="0.1" min="20" max="700" placeholder="Today's weight" />
+          <button type="submit" class="btn primary">Log weight</button>
+        </form>
+        <div id="chart-weight" class="chart"></div>
+      </div>
+      <div class="card">
+        <h2>Nutrient gaps</h2>
+        <p class="muted">Average daily intake on logged days vs Daily Values. Aim for the green zone on goals, and under the line on limits.</p>
+        <div id="progress-gaps" class="nutri-rows"></div>
+      </div>
+      <div class="card">
+        <h2>Most logged foods</h2>
+        <div id="progress-foods"></div>
+      </div>
+    </section>
+
     <!-- ============ PLAN TAB ============ -->
-    <section id="plan" class="tab-panel active">
+    <section id="plan" class="tab-panel">
       <!-- Cross-device sharing -->
       <div class="card">
         <div class="planner-head">
@@ -293,9 +417,43 @@
     </div>
   </div>
 
+  <!-- ============ ADD FOOD MODAL (describe / barcode / recipes / manual / photo) ============ -->
+  <div id="add-modal" class="modal">
+    <div class="modal-box">
+      <button class="modal-close" data-close="add" aria-label="Close">×</button>
+      <h2 id="add-title">Add food</h2>
+      <div id="add-body"></div>
+    </div>
+  </div>
+
+  <!-- ============ REVIEW / EDIT LOG ENTRY MODAL ============ -->
+  <div id="entry-modal" class="modal" data-sticky="1">
+    <div class="modal-box">
+      <button class="modal-close" data-close="entry" aria-label="Close">×</button>
+      <div id="entry-body"></div>
+    </div>
+  </div>
+
+  <!-- ============ PROFILE & GOALS MODAL ============ -->
+  <div id="profile-modal" class="modal" data-sticky="1">
+    <div class="modal-box">
+      <button class="modal-close" data-close="profile" aria-label="Close">×</button>
+      <h2>Profile &amp; goals</h2>
+      <div id="profile-body"></div>
+    </div>
+  </div>
+
+  <!-- ============ BUSY OVERLAY ============ -->
+  <div id="busy" class="busy" hidden>
+    <div class="busy-box">
+      <div class="spinner"></div>
+      <p id="busy-text">Analysing your meal…</p>
+    </div>
+  </div>
+
   <footer class="app-footer">
     <div class="wrap">
-      <p>Meal&nbsp;Plan · your plan is saved locally in this browser.</p>
+      <p>Meal&nbsp;Plan · your data is saved on this device (and synced if you turn on sharing). AI estimates are approximate and not medical advice.</p>
     </div>
   </footer>
 
@@ -306,6 +464,10 @@
   <script src="js/nutrition.js"></script>
   <script src="js/custom.js"></script>
   <script src="js/sync.js"></script>
+  <script src="js/tracker-store.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/tracker.js"></script>
   <script src="js/app.js"></script>
   <script>
     // Register the service worker (only over https / real hosting, not file://).

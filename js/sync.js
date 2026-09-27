@@ -2,14 +2,16 @@
  * Cross-device sync.
  *
  * Everything the app stores (the plan, shopping check-offs, weekly limits,
- * fat-% target, removed meals and custom recipes) can be shared between
+ * fat-% target, removed meals, custom recipes and the food-tracker logs) can be shared between
  * devices through a small Supabase table. Both people enter the same short
  * "share code" and then every change is pushed up and pulled down, so a plan
  * edited on one phone shows up on the other.
  *
  * The app still works fully offline — sync is optional and layered on top of
  * the local (localStorage) storage. Conflicts resolve last-write-wins, which
- * is fine for a household sharing one plan.
+ * is fine for a household sharing one plan. Food logs are merged instead
+ * (union of entries, see mergeTrackers in js/tracker-store.js) so two people
+ * logging at the same time never overwrite each other's meals.
  *
  * SECURITY NOTE: the Supabase publishable/anon key below is public by design
  * (it only grants access allowed by row-level security). Access to a plan is
@@ -73,6 +75,7 @@ function buildSnapshot() {
       hidden: state.hidden,
     },
     custom: loadCustomRecipes(),
+    tracker: typeof trackerSnapshot === 'function' ? trackerSnapshot() : undefined,
     updatedAt: nowMs(),
   };
 }
@@ -97,8 +100,11 @@ function normalizePlan(plan) {
 // Apply a snapshot pulled from the server into local state + UI.
 function applySnapshot(snap) {
   if (!snap || !snap.state) return;
+  let hadLocalOnly = false;
   syncSuppress = true;
   try {
+    if (snap.tracker && typeof mergeRemoteTracker === 'function') hadLocalOnly = mergeRemoteTracker(snap.tracker);
+
     // Custom recipes first, so the plan can reference them.
     saveCustomRecipes(Array.isArray(snap.custom) ? snap.custom : []);
     setCustomRecipes(loadCustomRecipes());
@@ -116,6 +122,8 @@ function applySnapshot(snap) {
   } finally {
     syncSuppress = false;
   }
+  // We had log entries the shared copy lacked: push the merged result.
+  if (hadLocalOnly) syncOnWrite();
 }
 
 function rerenderAll() {
@@ -132,6 +140,7 @@ function rerenderAll() {
   if (nut && nut.classList.contains('active')) renderNutrition();
   const shop = document.getElementById('shopping');
   if (shop && shop.classList.contains('active')) renderShopping();
+  if (typeof renderTrackerAll === 'function') renderTrackerAll();
 }
 
 // Called by storage.js after every local write. Debounced push.
@@ -141,8 +150,28 @@ function syncOnWrite() {
   pushTimer = setTimeout(pushNow, 800);
 }
 
+// Fold the shared copy's food logs into ours before pushing, so a push never
+// drops meals another device logged since our last pull.
+async function mergeRemoteLogsBeforePush() {
+  if (typeof mergeRemoteTracker !== 'function') return;
+  try {
+    const res = await fetch(`${restBase()}?code=eq.${encodeURIComponent(shareCode)}&select=data`, { headers: restHeaders() });
+    if (!res.ok) return;
+    const rows = await res.json();
+    const remote = rows[0] && rows[0].data && rows[0].data.tracker;
+    if (remote) {
+      const before = JSON.stringify(trackerSnapshot());
+      mergeRemoteTracker(remote);
+      if (JSON.stringify(trackerSnapshot()) !== before && typeof renderTrackerAll === 'function') renderTrackerAll();
+    }
+  } catch (e) {
+    /* offline: push what we have */
+  }
+}
+
 async function pushNow() {
   if (!isSyncing()) return;
+  await mergeRemoteLogsBeforePush();
   const snap = buildSnapshot();
   try {
     const res = await fetch(`${restBase()}?on_conflict=code`, {

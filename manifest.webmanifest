@@ -1,7 +1,7 @@
 {
   "name": "Meal Plan",
   "short_name": "Meal Plan",
-  "description": "Plan your week, get meal suggestions, build a shopping list, track nutrition, and cook with step-by-step instructions.",
+  "description": "Snap a photo of any meal for instant AI nutrition facts, track calories and macros against personal goals, chat with an AI nutrition coach, and plan your week.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
