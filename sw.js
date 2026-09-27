@@ -6,11 +6,11 @@
  *   the cached page when offline.
  * - Same-origin assets use stale-while-revalidate (instant load, refresh in
  *   the background).
- * - Cross-origin requests (Supabase sync + AI function, Open Food Facts) are
+ * - Cross-origin requests (Supabase sync, AI + database functions, Open Food Facts) are
  *   never intercepted.
  */
 
-const CACHE = 'mealplan-v2';
+const CACHE = 'mealplan-v3';
 const ASSETS = [
   '/',
   '/index.html',
@@ -26,6 +26,7 @@ const ASSETS = [
   '/js/ai.js',
   '/js/charts.js',
   '/js/tracker.js',
+  '/js/mirror.js',
   '/js/app.js',
   '/manifest.webmanifest',
   '/icon-192.png',

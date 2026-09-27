@@ -188,6 +188,8 @@ function saveTracker(t, opts) {
     }
   }
   if (!(opts && opts.silent) && typeof syncOnWrite === 'function') syncOnWrite();
+  // Copy the numbers to the queryable Supabase tables (js/mirror.js).
+  if (typeof scheduleMirror === 'function') scheduleMirror();
 }
 
 function pruneThumbs(t, keepDays) {

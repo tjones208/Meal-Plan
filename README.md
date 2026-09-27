@@ -68,6 +68,30 @@ messages to improve its products. Don't send anything you'd want kept private.
 Your food log itself stays on your device (and in your own Supabase project
 if you turn on sharing).
 
+### Your data in Supabase (for querying, e.g. with Claude)
+
+Every change to the food tracker is also copied, numbers only (no photos, no
+coach chats), into tables in the same Supabase project. It goes through the
+`nutrition-sync` edge function a few seconds after each change, and only what
+changed is sent. The tables are closed to the public app key: only the
+function and you (dashboard, SQL editor, or Claude through the Supabase
+connector) can read them.
+
+| Table / view | What's in it |
+|---|---|
+| `nutrition_daily` (view) | One row per person per day: calorie, macro and micronutrient totals, targets, water, average meal score |
+| `nutrition_entries` | Every logged meal: date, meal, name, source (photo/text/barcode/recipe/manual), meal score, AI notes, and totals |
+| `nutrition_items` | Each food inside a meal with portion, grams, multiplier and nutrients as eaten |
+| `nutrition_people` | Profile and current daily targets per person |
+| `nutrition_weights` | Weigh-ins (kg and lb) |
+| `nutrition_water` | Cups of water per day |
+
+Rows are grouped by `household_id`: the share code when cross-device sharing
+is on, otherwise a random id for the device. Units: calories kcal; protein,
+carbs, fat, saturated_fat, fiber, sugar g; sodium, cholesterol, potassium,
+calcium, iron, vitamin_c mg; vitamin_d mcg. The schema is in
+`supabase/migrations/`.
+
 ## Meal planning features
 
 1. **Create meal plans** — A weekly planner grid (7 days × breakfast / lunch /
@@ -122,8 +146,11 @@ js/tracker-store.js Food-log data model, goal maths, sync merge
 js/ai.js            AI edge-function client, photo resizing, barcode lookup
 js/charts.js        Small SVG charts for the Progress tab
 js/tracker.js       Today / Coach / Progress UI and the food modals
+js/mirror.js        Copies tracker numbers to the queryable Supabase tables
 js/app.js           UI controller wiring everything together
 supabase/functions/nutrition-ai/   Edge Function: photo/text analysis + coach (Gemini API, free tier)
+supabase/functions/nutrition-sync/ Edge Function: writes tracker numbers to the nutrition_* tables
+supabase/migrations/               Database schema for the nutrition_* tables
 ```
 
 Note: the AI features need the site served over http(s) (not `file://`) and
