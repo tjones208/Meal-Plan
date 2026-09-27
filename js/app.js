@@ -64,6 +64,10 @@ function initTabs() {
       panel.classList.add('active');
       if (btn.dataset.tab === 'shopping') renderShopping();
       if (btn.dataset.tab === 'nutrition') renderNutrition();
+      if (btn.dataset.tab === 'today') renderToday();
+      if (btn.dataset.tab === 'progress') renderProgress();
+      if (btn.dataset.tab === 'coach') renderCoach();
+      window.scrollTo(0, 0);
     });
   });
 }
@@ -381,9 +385,20 @@ function openRecipeModal(recipeId) {
     steps.appendChild(el('li', { text: step }));
   });
 
-  // Actions: link back to the source, and (for custom meals) edit/delete.
+  // Actions: log it, link back to the source, and (for custom meals) edit/delete.
   const actions = $('#recipe-actions');
   actions.innerHTML = '';
+  actions.appendChild(
+    el('button', {
+      class: 'btn primary small',
+      text: '＋ Log this meal',
+      onclick: () => {
+        closeRecipeModal();
+        closePicker();
+        openEntryModal(entryFromRecipe(recipe, mealForTime()), dateKey(), true);
+      },
+    })
+  );
   if (recipe.sourceUrl) {
     actions.appendChild(
       el('a', { class: 'source-link', href: recipe.sourceUrl, target: '_blank', rel: 'noopener noreferrer', text: '🔗 View original recipe' })
@@ -473,10 +488,11 @@ function initControls() {
     });
   });
 
-  // Close modals on backdrop click / Escape.
+  // Close modals on backdrop click / Escape. "Sticky" modals (e.g. reviewing
+  // an AI analysis) only close via their buttons so a stray tap can't lose work.
   document.querySelectorAll('.modal').forEach((m) => {
     m.addEventListener('click', (e) => {
-      if (e.target === m) m.classList.remove('open');
+      if (e.target === m && !m.dataset.sticky) m.classList.remove('open');
     });
   });
   document.addEventListener('keydown', (e) => {
@@ -1005,6 +1021,7 @@ function init() {
   renderPlanner();
   renderCustomList();
   renderHiddenList();
+  initTracker();
   initSync();
 }
 
