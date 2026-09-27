@@ -2,15 +2,15 @@
  * Service worker: makes Meal Plan installable and work offline.
  *
  * - Precaches the app shell on install.
- * - Navigations are network-first (so new deploys show up), falling back to
- *   the cached page when offline.
- * - Same-origin assets use stale-while-revalidate (instant load, refresh in
- *   the background).
+ * - Everything same-origin is network-first, falling back to the cache when
+ *   offline. The page and its scripts always come from the same deploy, so an
+ *   update takes effect on the next open (serving cached scripts first used to
+ *   pair a new page with old code for one launch).
  * - Cross-origin requests (Supabase sync, AI + database functions, Open Food Facts) are
  *   never intercepted.
  */
 
-const CACHE = 'mealplan-v3';
+const CACHE = 'mealplan-v4';
 const ASSETS = [
   '/',
   '/index.html',
@@ -70,17 +70,14 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(
-    caches.match(req).then((cached) => {
-      const network = fetch(req)
-        .then((res) => {
-          if (res && res.status === 200) {
-            const copy = res.clone();
-            caches.open(CACHE).then((c) => c.put(req, copy));
-          }
-          return res;
-        })
-        .catch(() => cached);
-      return cached || network;
-    })
+    fetch(req)
+      .then((res) => {
+        if (res && res.status === 200) {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(req, copy));
+        }
+        return res;
+      })
+      .catch(() => caches.match(req))
   );
 });
