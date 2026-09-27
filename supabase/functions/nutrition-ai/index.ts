@@ -1,7 +1,7 @@
 /*
  * nutrition-ai — Supabase Edge Function that powers the AI features of the
- * Meal Plan app. The Anthropic API key lives here as a Supabase secret, never
- * in the browser.
+ * Meal Plan app using Google's Gemini API free tier. The API key lives here
+ * as a Supabase secret, never in the browser.
  *
  * POST JSON { action, ... }:
  *   - "analyze_photo": { image: base64 JPEG/PNG/WebP, mediaType, note? }
@@ -9,16 +9,20 @@
  *   - "coach":         { messages: [{role, content}], context: {...} }
  *
  * Secrets (Supabase dashboard → Edge Functions → Secrets):
- *   ANTHROPIC_API_KEY  required
+ *   GEMINI_API_KEY     required; free key from https://aistudio.google.com/apikey
+ *                      (no credit card; keep billing off so it can never cost anything)
  *   APP_PASSCODE       optional; when set, requests must send the same value
  *                      in the `x-app-passcode` header (stops strangers who
- *                      find the public anon key from spending your credits).
- *   ANTHROPIC_MODEL    optional; defaults to claude-opus-5.
+ *                      find the public anon key from using up your free quota).
+ *   GEMINI_MODEL       optional; defaults to gemini-flash-latest.
+ *
+ * When the free daily quota for the main model runs out, requests retry on
+ * the Flash-Lite model, which has its own (larger) free quota.
  */
 
-import Anthropic from 'npm:@anthropic-ai/sdk@0.128.0';
+import { ApiError, GoogleGenAI, type Content, type Part } from 'npm:@google/genai@2.24.0';
 
-const MODEL = Deno.env.get('ANTHROPIC_MODEL') || 'claude-opus-5';
+const MODELS = [Deno.env.get('GEMINI_MODEL') || 'gemini-flash-latest', 'gemini-flash-lite-latest'];
 const MAX_IMAGE_B64 = 7_000_000; // ~5 MB decoded; the app downsizes before upload
 const MAX_TEXT = 2_000;
 const MAX_CHAT_MESSAGES = 24;
@@ -40,14 +44,7 @@ function json(body: unknown, status = 200): Response {
 const NUTRIENT_KEYS = [
   'calories', 'protein', 'carbs', 'fat', 'saturatedFat', 'fiber', 'sugar',
   'sodium', 'cholesterol', 'potassium', 'calcium', 'iron', 'vitaminC', 'vitaminD',
-] as const;
-
-const nutrientsSchema = {
-  type: 'object',
-  properties: Object.fromEntries(NUTRIENT_KEYS.map((k) => [k, { type: 'number' }])),
-  required: [...NUTRIENT_KEYS],
-  additionalProperties: false,
-};
+];
 
 const MEAL_SCHEMA = {
   type: 'object',
@@ -63,10 +60,13 @@ const MEAL_SCHEMA = {
           portion: { type: 'string' },
           grams: { type: 'number' },
           confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
-          nutrients: nutrientsSchema,
+          nutrients: {
+            type: 'object',
+            properties: Object.fromEntries(NUTRIENT_KEYS.map((k) => [k, { type: 'number' }])),
+            required: NUTRIENT_KEYS,
+          },
         },
         required: ['name', 'portion', 'grams', 'confidence', 'nutrients'],
-        additionalProperties: false,
       },
     },
     healthScore: { type: 'integer' },
@@ -74,7 +74,6 @@ const MEAL_SCHEMA = {
     tip: { type: 'string' },
   },
   required: ['isFood', 'mealName', 'items', 'healthScore', 'notes', 'tip'],
-  additionalProperties: false,
 };
 
 const ANALYST_SYSTEM = `You are an expert registered dietitian and food scientist who estimates the nutrition of meals.
@@ -91,21 +90,23 @@ Work like a professional:
 - tip: one short, specific, encouraging suggestion to make this meal better for the user.
 - If the image or text is not food, set isFood to false, return an empty items list and explain in notes.`;
 
-type MealResult = { isFood: boolean; mealName: string; items: unknown[]; healthScore: number; notes: string; tip: string };
-
-async function analyzeMeal(client: Anthropic, content: Anthropic.ContentBlockParam[]): Promise<MealResult> {
-  const msg = await createWithFallback(client, {
-    model: MODEL,
-    max_tokens: 16000,
-    thinking: { type: 'adaptive' },
-    output_config: { effort: 'high', format: { type: 'json_schema', schema: MEAL_SCHEMA } },
-    system: ANALYST_SYSTEM,
-    messages: [{ role: 'user', content }],
+async function analyzeMeal(ai: GoogleGenAI, parts: Part[]) {
+  const res = await generate(ai, {
+    contents: [{ role: 'user', parts }],
+    config: {
+      systemInstruction: ANALYST_SYSTEM,
+      responseMimeType: 'application/json',
+      responseJsonSchema: MEAL_SCHEMA,
+      temperature: 0.2,
+    },
   });
-  if (msg.stop_reason === 'refusal') throw new HttpError(422, 'The AI declined to analyse this input.');
-  const text = msg.content.find((b: { type: string }) => b.type === 'text') as { text: string } | undefined;
+  const text = res.text;
   if (!text) throw new HttpError(502, 'The AI returned no result. Please try again.');
-  return JSON.parse(text.text);
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new HttpError(502, 'The AI returned an unreadable result. Please try again.');
+  }
 }
 
 /* ------------------------------------------------------------------ *
@@ -125,11 +126,10 @@ How you work:
 
 type ChatTurn = { role: 'user' | 'assistant'; content: string };
 
-async function coach(client: Anthropic, body: { messages?: ChatTurn[]; context?: Record<string, unknown> }): Promise<string> {
+async function coach(ai: GoogleGenAI, body: { messages?: ChatTurn[]; context?: Record<string, unknown> }): Promise<string> {
   const turns = (Array.isArray(body.messages) ? body.messages : [])
     .filter((m) => (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.trim())
-    .slice(-MAX_CHAT_MESSAGES)
-    .map((m) => ({ role: m.role, content: m.content.slice(0, 4000) }));
+    .slice(-MAX_CHAT_MESSAGES);
   while (turns.length && turns[0].role !== 'user') turns.shift();
   if (!turns.length || turns[turns.length - 1].role !== 'user') throw new HttpError(400, 'Send a question for the coach.');
 
@@ -137,25 +137,23 @@ async function coach(client: Anthropic, body: { messages?: ChatTurn[]; context?:
   const recipes = typeof ctx.recipes === 'string' ? ctx.recipes.slice(0, 40_000) : '';
   const { recipes: _omit, ...userData } = ctx;
 
-  const msg = await createWithFallback(client, {
-    model: MODEL,
-    max_tokens: 16000,
-    thinking: { type: 'adaptive' },
-    output_config: { effort: 'medium' },
-    system: [
-      // Stable prefix (instructions + recipe library) is cached; the user's live data follows it.
-      { type: 'text', text: COACH_SYSTEM },
-      { type: 'text', text: `User's recipe library (name | meal types | kcal, protein/carbs/fat g per serving):\n${recipes || '(none)'}`, cache_control: { type: 'ephemeral' } },
-      { type: 'text', text: `User data (JSON):\n${JSON.stringify(userData).slice(0, 60_000)}` },
-    ],
-    messages: turns,
+  const contents: Content[] = turns.map((m) => ({
+    role: m.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: m.content.slice(0, 4000) }],
+  }));
+
+  const res = await generate(ai, {
+    contents,
+    config: {
+      systemInstruction: [
+        COACH_SYSTEM,
+        `User's recipe library (name | meal types | kcal, protein/carbs/fat g per serving):\n${recipes || '(none)'}`,
+        `User data (JSON):\n${JSON.stringify(userData).slice(0, 60_000)}`,
+      ].join('\n\n'),
+      temperature: 0.6,
+    },
   });
-  if (msg.stop_reason === 'refusal') return "Sorry, I can't help with that one. Try asking another way.";
-  return msg.content
-    .filter((b: { type: string }) => b.type === 'text')
-    .map((b: { text: string }) => b.text)
-    .join('\n')
-    .trim();
+  return (res.text || '').trim() || "Sorry, I couldn't come up with an answer. Try asking another way.";
 }
 
 /* ------------------------------------------------------------------ *
@@ -168,18 +166,26 @@ class HttpError extends Error {
   }
 }
 
-// Opt into server-side refusal fallbacks; if the account/API rejects that
-// beta parameter, retry once as a plain request.
+// Try the main model, then Flash-Lite when the first is out of free quota
+// (429) or unavailable (404/503).
 // deno-lint-ignore no-explicit-any
-async function createWithFallback(client: Anthropic, params: any): Promise<any> {
-  try {
-    return await client.beta.messages.create({ ...params, betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' });
-  } catch (err) {
-    if (err instanceof Anthropic.BadRequestError && /fallback/i.test(err.message)) {
-      return await client.messages.create(params);
+async function generate(ai: GoogleGenAI, req: { contents: Content[]; config: any }) {
+  let lastErr: unknown = null;
+  for (const model of MODELS) {
+    try {
+      const res = await ai.models.generateContent({ model, ...req });
+      const reason = res.candidates?.[0]?.finishReason;
+      if (!res.text && (reason === 'SAFETY' || reason === 'PROHIBITED_CONTENT' || res.promptFeedback?.blockReason)) {
+        throw new HttpError(422, 'The AI declined to analyse this input.');
+      }
+      return res;
+    } catch (err) {
+      lastErr = err;
+      if (err instanceof ApiError && [404, 429, 503].includes(err.status)) continue;
+      throw err;
     }
-    throw err;
   }
+  throw lastErr;
 }
 
 Deno.serve(async (req: Request) => {
@@ -190,8 +196,8 @@ Deno.serve(async (req: Request) => {
   if (passcode && req.headers.get('x-app-passcode') !== passcode) {
     return json({ error: 'Wrong or missing app passcode. Set it in the Coach tab settings.' }, 401);
   }
-  const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
-  if (!apiKey) return json({ error: 'Server is missing ANTHROPIC_API_KEY. Add it in Supabase → Edge Functions → Secrets.' }, 500);
+  const apiKey = Deno.env.get('GEMINI_API_KEY');
+  if (!apiKey) return json({ error: 'Server is missing GEMINI_API_KEY. Add your free key in Supabase → Edge Functions → Secrets.' }, 500);
 
   let body: Record<string, unknown>;
   try {
@@ -200,7 +206,7 @@ Deno.serve(async (req: Request) => {
     return json({ error: 'Invalid JSON body' }, 400);
   }
 
-  const client = new Anthropic({ apiKey });
+  const ai = new GoogleGenAI({ apiKey });
 
   try {
     switch (body.action) {
@@ -208,29 +214,34 @@ Deno.serve(async (req: Request) => {
         const image = String(body.image || '');
         const mediaType = String(body.mediaType || 'image/jpeg');
         if (!image || image.length > MAX_IMAGE_B64) throw new HttpError(400, 'Missing or oversized image.');
-        if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(mediaType)) throw new HttpError(400, 'Unsupported image type.');
+        if (!['image/jpeg', 'image/png', 'image/webp'].includes(mediaType)) throw new HttpError(400, 'Unsupported image type.');
         const note = String(body.note || '').slice(0, MAX_TEXT);
-        const result = await analyzeMeal(client, [
-          { type: 'image', source: { type: 'base64', media_type: mediaType as 'image/jpeg', data: image } },
-          { type: 'text', text: note ? `Analyse this meal. Extra details from me: ${note}` : 'Analyse this meal.' },
-        ]);
-        return json(result);
+        return json(
+          await analyzeMeal(ai, [
+            { inlineData: { mimeType: mediaType, data: image } },
+            { text: note ? `Analyse this meal. Extra details from me: ${note}` : 'Analyse this meal.' },
+          ])
+        );
       }
       case 'analyze_text': {
         const text = String(body.text || '').trim().slice(0, MAX_TEXT);
         if (!text) throw new HttpError(400, 'Describe what you ate.');
-        return json(await analyzeMeal(client, [{ type: 'text', text: `Analyse this meal I ate: ${text}` }]));
+        return json(await analyzeMeal(ai, [{ text: `Analyse this meal I ate: ${text}` }]));
       }
       case 'coach':
-        return json({ reply: await coach(client, body as { messages?: ChatTurn[] }) });
+        return json({ reply: await coach(ai, body as { messages?: ChatTurn[] }) });
       default:
         return json({ error: 'Unknown action' }, 400);
     }
   } catch (err) {
     if (err instanceof HttpError) return json({ error: err.message }, err.status);
-    if (err instanceof Anthropic.RateLimitError) return json({ error: 'The AI is busy right now. Try again in a minute.' }, 429);
-    if (err instanceof Anthropic.AuthenticationError) return json({ error: 'The server API key is invalid.' }, 500);
-    if (err instanceof Anthropic.APIError) return json({ error: `AI service error (${err.status}).` }, 502);
+    if (err instanceof ApiError) {
+      if (err.status === 429) return json({ error: "You've reached today's free AI limit. Try again later, or log by barcode or recipes for now." }, 429);
+      if (err.status === 400 && /api key/i.test(err.message)) return json({ error: 'The server Gemini API key is invalid.' }, 500);
+      if (err.status === 403) return json({ error: 'The Gemini API key is not allowed to use this model.' }, 500);
+      console.error(err);
+      return json({ error: `AI service error (${err.status}).` }, 502);
+    }
     console.error(err);
     return json({ error: 'Something went wrong analysing that. Please try again.' }, 500);
   }

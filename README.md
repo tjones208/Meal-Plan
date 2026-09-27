@@ -3,13 +3,14 @@
 An AI nutrition tracker and weekly meal planner. Snap a photo of any meal and
 get calories, macros and micronutrients in seconds, track against personal
 goals, chat with an AI nutrition coach, and plan and shop for your week. It is
-a static web app (installable PWA) with no build step; the AI runs in one small
-Supabase Edge Function so your API key never reaches the browser.
+a static web app (installable PWA) with no build step. The AI runs in one small
+Supabase Edge Function on Google's free Gemini API tier, so it costs nothing to
+use, and your API key never reaches the browser.
 
 ## Nutrition tracker (Today · Coach · Progress tabs)
 
 - **📸 Photo logging.** Snap or upload a meal photo and add optional details
-  ("no dressing"). Claude identifies every item, estimates portions, reads
+  ("no dressing"). The AI identifies every item, estimates portions, reads
   nutrition labels when visible, and returns calories, protein, carbs, fat,
   saturated fat, fiber, sugar, sodium, cholesterol, potassium, calcium, iron
   and vitamins C and D. It also gives a meal score (1-10), the assumptions it
@@ -40,19 +41,32 @@ Supabase Edge Function so your API key never reaches the browser.
   device picks who it logs for. With a shared plan, logs merge entry by entry
   across phones, so nobody's meals get overwritten.
 
-### AI backend setup (one time)
+### AI backend setup (one time, free)
 
 The AI runs in the `nutrition-ai` Supabase Edge Function
-(`supabase/functions/nutrition-ai/index.ts`), which calls the Claude API.
+(`supabase/functions/nutrition-ai/index.ts`), which calls Google's Gemini API
+on its **free tier**. There's no credit card and no charges. The free tier is
+rate-limited per day, which is plenty for a household. Supabase's free plan
+covers the function too.
 
-1. In the Supabase dashboard for the project in `js/sync.js`, open
-   **Edge Functions → Secrets** and add `ANTHROPIC_API_KEY` (from
-   console.anthropic.com).
-2. Recommended: add an `APP_PASSCODE` secret and enter the same passcode in the
+1. Create a free API key at https://aistudio.google.com/apikey (sign in with a
+   Google account). **Don't turn on billing** for that project; without
+   billing, Google cannot charge you.
+2. In the Supabase dashboard for the project in `js/sync.js`, open
+   **Edge Functions → Secrets** and add `GEMINI_API_KEY` with that key.
+3. Recommended: add an `APP_PASSCODE` secret and enter the same passcode in the
    app under **Coach → AI settings** on each device. The Supabase anon key is
-   public, so without a passcode anyone who finds it could use your AI credits.
-3. Optional: set `ANTHROPIC_MODEL` to override the default model.
-4. To redeploy after changes: `supabase functions deploy nutrition-ai`.
+   public, so without a passcode strangers could use up your free daily quota.
+4. Optional: set `GEMINI_MODEL` to pin a specific model (the default is
+   `gemini-flash-latest`). If the main model's free quota runs out, requests
+   automatically retry on `gemini-flash-lite-latest`, which has its own free
+   quota.
+5. To redeploy after changes: `supabase functions deploy nutrition-ai`.
+
+**Privacy note:** on Gemini's free tier Google may use your photos and chat
+messages to improve its products. Don't send anything you'd want kept private.
+Your food log itself stays on your device (and in your own Supabase project
+if you turn on sharing).
 
 ## Meal planning features
 
@@ -109,7 +123,7 @@ js/ai.js            AI edge-function client, photo resizing, barcode lookup
 js/charts.js        Small SVG charts for the Progress tab
 js/tracker.js       Today / Coach / Progress UI and the food modals
 js/app.js           UI controller wiring everything together
-supabase/functions/nutrition-ai/   Edge Function: photo/text analysis + coach (Claude API)
+supabase/functions/nutrition-ai/   Edge Function: photo/text analysis + coach (Gemini API, free tier)
 ```
 
 Note: the AI features need the site served over http(s) (not `file://`) and

@@ -2,11 +2,11 @@
  * AI + food-data services used by the tracker.
  *
  *  - callNutritionAI(): talks to the `nutrition-ai` Supabase Edge Function,
- *    which holds the Anthropic API key server-side (see
+ *    which calls Gemini's free tier with a key held server-side (see
  *    supabase/functions/nutrition-ai). Uses SUPABASE_URL / SUPABASE_KEY from
  *    js/sync.js.
  *  - prepareImage(): downsizes a camera photo to a JPEG the model reads well
- *    (long edge 1568 px) plus a tiny thumbnail for the log.
+ *    (long edge 1568 px, keeps uploads small) plus a tiny thumbnail for the log.
  *  - lookupBarcode(): Open Food Facts product lookup (free, no key).
  *  - BarcodeScanner: live camera scanning where the browser supports the
  *    BarcodeDetector API (Chrome/Android); other browsers type the number.
