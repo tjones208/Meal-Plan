@@ -473,6 +473,15 @@
   <script>
     // Register the service worker (only over https / real hosting, not file://).
     if ('serviceWorker' in navigator && location.protocol === 'https:') {
+      // When an updated service worker takes over, reload once so the page
+      // and its scripts all come from the new version.
+      var hadController = !!navigator.serviceWorker.controller;
+      var reloaded = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (!hadController || reloaded) return;
+        reloaded = true;
+        location.reload();
+      });
       window.addEventListener('load', function () {
         navigator.serviceWorker.register('sw.js').catch(function () {});
       });
